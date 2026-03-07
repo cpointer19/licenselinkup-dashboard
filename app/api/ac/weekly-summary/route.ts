@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
-import { fetchAllContacts, fetchCampaigns, fetchContactAutomationsByAutomation, fetchAutomations } from "@/lib/activecampaign";
+import { fetchAllContacts, fetchCampaigns, fetchAutomations, fetchTags } from "@/lib/activecampaign";
 
 export async function GET() {
   try {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-    const [contacts, campaigns, automations] = await Promise.all([
+    const [contacts, campaigns, automations, tags] = await Promise.all([
       fetchAllContacts(),
       fetchCampaigns(),
       fetchAutomations(),
+      fetchTags(),
     ]);
 
     // New contacts this week
@@ -33,6 +34,16 @@ export async function GET() {
     const weekClicks = recentCampaigns.reduce((s, c) => s + Number(c.uniquelinkclicks ?? 0), 0);
     const openRate   = weekSent ? ((weekOpens / weekSent) * 100).toFixed(1) : null;
 
+    // Pipeline funnel data from tags
+    const pipelineTags = ["became_lead", "profile_created", "onboarding_complete"];
+    const pipeline = pipelineTags.map((tagName) => {
+      const tag = tags.find((t) => t.tag.toLowerCase() === tagName.toLowerCase());
+      return {
+        stage: tagName,
+        count: Number(tag?.subscriber_count ?? 0),
+      };
+    });
+
     return NextResponse.json({
       week: {
         start: oneWeekAgo.toISOString().slice(0, 10),
@@ -55,6 +66,7 @@ export async function GET() {
         total:  automations.length,
       },
       totalContacts: contacts.length,
+      pipeline,
     });
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 });

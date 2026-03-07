@@ -99,7 +99,7 @@ export function CsvExportButton({
           <Info className="h-4 w-4" />
         </button>
         {showTip && (
-          <div className="absolute left-7 top-1/2 -translate-y-1/2 z-50 w-72 rounded-lg border border-slate-200 bg-white p-3 shadow-lg text-xs text-slate-600 leading-relaxed">
+          <div className="absolute right-7 top-1/2 -translate-y-1/2 z-50 w-72 rounded-lg border border-slate-200 bg-white p-3 shadow-lg text-xs text-slate-600 leading-relaxed">
             <p className="font-semibold text-slate-800 mb-1">Export for AI Analysis</p>
             <p>
               Downloads all visible data as a <strong>CSV file</strong> — the universal format for data
