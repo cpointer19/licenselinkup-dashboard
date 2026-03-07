@@ -3,8 +3,25 @@ import { AutomationsClient } from "./automations-client";
 
 export const dynamic = "force-dynamic";
 
+const HIDDEN_AUTOMATIONS = new Set([
+  "Landing Page sign up Welcome email",
+  "Founding Application Received",
+  "Send Peer Review Emails (Applicant Notification)",
+  "#3 - New Signup",
+  "EMAIL 2 — New Funnel Entry Email",
+  "email 1 to peer",
+  "EMAIL 4 — Founding Member Peer Review Request",
+  "Outreach to Founding Member's Peers for Review",
+  "Automation 9",
+  "# 4 — FM PR Request",
+  "Automation for form Peer Review – Member Feedback",
+  "#5 - FM Peer Outreach",
+  "Founder Drip Email Series",
+]);
+
 async function getData() {
-  const automations = await fetchAutomations();
+  const allAutomations = await fetchAutomations();
+  const automations = allAutomations.filter((a) => !HIDDEN_AUTOMATIONS.has(a.name));
 
   const enriched = await Promise.all(
     automations.map(async (auto) => {
