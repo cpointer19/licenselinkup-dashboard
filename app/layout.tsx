@@ -5,6 +5,10 @@ import { Sidebar } from "@/components/sidebar";
 export const metadata: Metadata = {
   title: "LicenseLinkUp | Intelligence Dashboard",
   description: "ActiveCampaign analytics dashboard for LicenseLinkUp",
+  icons: {
+    icon: "/ll-logo-icon.svg",
+    apple: "/ll-logo.svg",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

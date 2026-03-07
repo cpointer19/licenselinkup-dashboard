@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <rect width="120" height="120" rx="26" fill="#E4E4E8"/>
+  <!-- Left L - lighter, like an open book page -->
+  <path d="M32 26C32 24.9 32.9 24 34 24h10c1.1 0 2 .9 2 2v58h18c1.1 0 2 .9 2 2v8c0 1.1-.9 2-2 2H34c-1.1 0-2-.9-2-2V26z" fill="#9B9DAE"/>
+  <!-- Right L - darker, overlapping -->
+  <path d="M54 26c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2v58h18c1.1 0 2 .9 2 2v8c0 1.1-.9 2-2 2H56c-1.1 0-2-.9-2-2V26z" fill="#3D4055"/>
+</svg>

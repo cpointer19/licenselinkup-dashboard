@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -29,9 +30,7 @@ export function Sidebar() {
     <aside className="flex h-screen w-60 flex-col border-r border-slate-200 bg-white">
       {/* Logo */}
       <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-sm">
-          LL
-        </div>
+        <Image src="/ll-logo.svg" alt="LicenseLinkUp" width={32} height={32} className="rounded-lg" />
         <div>
           <p className="text-sm font-semibold text-slate-900">LicenseLinkUp</p>
           <p className="text-xs text-slate-500">Intelligence Dashboard</p>
