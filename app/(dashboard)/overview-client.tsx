@@ -62,6 +62,7 @@ function topTags(tags: ACTag[], n = 10) {
 // ─── Contact Classification ──────────────────────────────────────────────────
 
 const TEST_USER_EMAILS = new Set([
+  "pointercu@gmail.com",
   "pointercu+2@gmail.com",
   "pointercu+83@gmail.com",
   "testing1@gmail.com",
