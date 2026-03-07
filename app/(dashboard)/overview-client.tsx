@@ -273,7 +273,7 @@ function ConversionPipeline({ stages, totalContacts }: { stages: { stage: string
                                       <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[9px] px-1.5 py-0 flex-shrink-0">Test User</Badge>
                                     )}
                                     {realLead && (
-                                      <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[9px] px-1.5 py-0 flex-shrink-0">Real Lead</Badge>
+                                      <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[9px] px-1.5 py-0 flex-shrink-0">Founding Applicant Peer</Badge>
                                     )}
                                   </div>
                                   <p className="text-[11px] text-slate-400 truncate">{c.email}</p>
