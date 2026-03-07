@@ -1,7 +1,7 @@
 import { fetchAutomations, fetchContactAutomationsByAutomation } from "@/lib/activecampaign";
 import { AutomationsClient } from "./automations-client";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 async function getData() {
   const automations = await fetchAutomations();

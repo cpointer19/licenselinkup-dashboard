@@ -6,7 +6,7 @@ import {
 } from "@/lib/activecampaign";
 import { ContactsClient } from "./contacts-client";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 async function getData() {
   const [contacts, allTags] = await Promise.all([fetchAllContacts(), fetchTags()]);
