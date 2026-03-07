@@ -35,7 +35,7 @@ export function Sidebar() {
     <aside className="flex h-screen w-60 flex-col border-r border-[#3A4553] bg-[#2E3946]">
       {/* Logo */}
       <div className="flex h-16 items-center gap-3 border-b border-white/10 px-5">
-        <Image src="/ll-logo.svg" alt="LicenseLinkUp" width={32} height={32} className="rounded-lg brightness-0 invert" />
+        <Image src="/ll-logo.svg" alt="LicenseLinkUp" width={32} height={32} className="rounded-lg" />
         <div>
           <p className="text-sm font-semibold text-white">LicenseLinkUp</p>
           <p className="text-xs text-slate-400">Intelligence Dashboard</p>
