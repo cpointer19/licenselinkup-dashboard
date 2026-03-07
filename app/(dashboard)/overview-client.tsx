@@ -81,10 +81,22 @@ function ConversionPipeline({ stages, totalContacts }: { stages: { stage: string
   const lastCount = stages[stages.length - 1]?.count ?? 0;
   const overallRate = firstCount > 0 ? ((lastCount / firstCount) * 100).toFixed(1) : "0";
 
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const [pipelineContacts, setPipelineContacts] = useState<Record<string, PipelineContact[]> | null>(null);
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
+
+  // Auto-fetch contacts on mount since expanded by default
+  useEffect(() => {
+    setLoadingContacts(true);
+    fetch("/api/ac/pipeline-contacts")
+      .then((r) => r.json())
+      .then((d) => {
+        setPipelineContacts(d.stages ?? {});
+        setLoadingContacts(false);
+      })
+      .catch(() => setLoadingContacts(false));
+  }, []);
 
   const toggleExpand = useCallback(() => {
     if (!expanded && !pipelineContacts) {

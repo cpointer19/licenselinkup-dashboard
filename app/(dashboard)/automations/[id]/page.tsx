@@ -12,8 +12,18 @@ export default async function AutomationDetailPage({ params }: { params: Promise
     fetchContactAutomationsByAutomation(id),
   ]);
 
+  // Deduplicate by contact ID — keep the most recent entry per contact
+  const byContact = new Map<string, (typeof contactAutomations)[0]>();
+  for (const ca of contactAutomations) {
+    const existing = byContact.get(ca.contact);
+    if (!existing || (ca.adddate && existing.adddate && ca.adddate > existing.adddate)) {
+      byContact.set(ca.contact, ca);
+    }
+  }
+  const uniqueAutomations = Array.from(byContact.values());
+
   // Enrich first 30 contacts
-  const slice = contactAutomations.slice(0, 30);
+  const slice = uniqueAutomations.slice(0, 30);
   const contacts = await Promise.all(
     slice.map(async (ca) => {
       try {
@@ -30,7 +40,7 @@ export default async function AutomationDetailPage({ params }: { params: Promise
       automation={automation}
       blocks={blocks}
       contacts={contacts}
-      totalContacts={contactAutomations.length}
+      totalContacts={uniqueAutomations.length}
     />
   );
 }
