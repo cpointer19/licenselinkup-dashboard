@@ -1,18 +1,23 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
-import { Users, Zap, Mail, Tag, TrendingUp, List } from "lucide-react";
+import { Users, Zap, Mail, Tag, TrendingUp, List, ArrowRight, UserCheck, ClipboardCheck, Award, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import type { ACContact, ACAutomation, ACCampaign, ACList, ACTag } from "@/lib/activecampaign";
 import { StatsCard } from "@/components/stats-card";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog";
 import { PageHeader } from "@/components/page-header";
 import { CsvExportButton } from "@/components/csv-export-button";
 import { ClaudeBot } from "@/components/claude-bot";
+import { ContactDetail } from "./contacts/contact-detail";
 import { formatDate } from "@/lib/utils";
 
 interface Props {
@@ -48,8 +53,217 @@ function topTags(tags: ACTag[], n = 10) {
   return [...tags]
     .sort((a, b) => Number(b.subscriber_count ?? 0) - Number(a.subscriber_count ?? 0))
     .slice(0, n)
-    .map((t) => ({ name: t.tag, value: Number(t.subscriber_count ?? 0) }));
+    .map((t) => ({
+      name: t.tag.length > 22 ? t.tag.slice(0, 20) + "…" : t.tag,
+      value: Number(t.subscriber_count ?? 0),
+    }));
 }
+
+// ─── Conversion Pipeline ──────────────────────────────────────────────────────
+
+const PIPELINE_META = [
+  { stage: "became_lead",         label: "Leads (Signup)",      icon: UserCheck,      color: "#3b82f6", bg: "bg-blue-50",    border: "border-blue-200",    text: "text-blue-700" },
+  { stage: "profile_created",     label: "Profile Created",     icon: ClipboardCheck, color: "#8b5cf6", bg: "bg-violet-50",  border: "border-violet-200",  text: "text-violet-700" },
+  { stage: "onboarding_complete", label: "Founding Members",    icon: Award,          color: "#10b981", bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700" },
+];
+
+interface PipelineContact {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  cdate?: string;
+}
+
+function ConversionPipeline({ stages, totalContacts }: { stages: { stage: string; count: number }[]; totalContacts: number }) {
+  const maxCount = Math.max(...stages.map((s) => s.count), 1);
+  const firstCount = stages[0]?.count ?? 0;
+  const lastCount = stages[stages.length - 1]?.count ?? 0;
+  const overallRate = firstCount > 0 ? ((lastCount / firstCount) * 100).toFixed(1) : "0";
+
+  const [expanded, setExpanded] = useState(false);
+  const [pipelineContacts, setPipelineContacts] = useState<Record<string, PipelineContact[]> | null>(null);
+  const [loadingContacts, setLoadingContacts] = useState(false);
+  const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
+
+  const toggleExpand = useCallback(() => {
+    if (!expanded && !pipelineContacts) {
+      setLoadingContacts(true);
+      fetch("/api/ac/pipeline-contacts")
+        .then((r) => r.json())
+        .then((d) => {
+          setPipelineContacts(d.stages ?? {});
+          setLoadingContacts(false);
+        })
+        .catch(() => setLoadingContacts(false));
+    }
+    setExpanded((v) => !v);
+  }, [expanded, pipelineContacts]);
+
+  return (
+    <>
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                Conversion Pipeline
+              </CardTitle>
+              <CardDescription>Landing page signup &rarr; Profile &rarr; Founding member</CardDescription>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="text-2xl font-bold text-slate-900">{overallRate}%</p>
+                <p className="text-xs text-slate-500">Full conversion rate</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleExpand}
+                className="gap-1 text-xs text-slate-500"
+              >
+                {loadingContacts ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : expanded ? (
+                  <ChevronUp className="h-3.5 w-3.5" />
+                ) : (
+                  <ChevronDown className="h-3.5 w-3.5" />
+                )}
+                {expanded ? "Collapse" : "Show Contacts"}
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Stage summary cards */}
+          <div className="flex items-stretch gap-3">
+            {stages.map((stage, idx) => {
+              const meta = PIPELINE_META.find((m) => m.stage === stage.stage) ?? PIPELINE_META[0];
+              const Icon = meta.icon;
+              const barPct = Math.max((stage.count / maxCount) * 100, 8);
+              const nextStage = stages[idx + 1];
+              const advanceRate = nextStage && stage.count > 0
+                ? ((nextStage.count / stage.count) * 100).toFixed(0)
+                : null;
+
+              return (
+                <div key={stage.stage} className="flex items-center gap-3 flex-1">
+                  <div className={`flex-1 rounded-xl border ${meta.border} ${meta.bg} p-4 transition-all hover:shadow-md`}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-white/80`}>
+                        <Icon className="h-4 w-4" style={{ color: meta.color }} />
+                      </div>
+                      <span className={`text-xs font-semibold ${meta.text}`}>{meta.label}</span>
+                    </div>
+                    <p className={`text-3xl font-bold ${meta.text}`}>{stage.count.toLocaleString()}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {totalContacts > 0 ? `${((stage.count / totalContacts) * 100).toFixed(0)}% of all contacts` : "contacts"}
+                    </p>
+                    {/* Progress bar */}
+                    <div className="mt-3 h-2 w-full rounded-full bg-white/80 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-700"
+                        style={{ width: `${barPct}%`, backgroundColor: meta.color }}
+                      />
+                    </div>
+                  </div>
+                  {idx < stages.length - 1 && (
+                    <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                      <ArrowRight className="h-5 w-5 text-slate-300" />
+                      {advanceRate && (
+                        <span className="text-[10px] font-medium text-slate-400">{advanceRate}%</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Expandable swim lanes */}
+          {expanded && (
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              {loadingContacts && !pipelineContacts ? (
+                <div className="flex items-center justify-center gap-2 py-6 text-sm text-slate-500">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading contacts…
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-3">
+                  {PIPELINE_META.map((meta) => {
+                    const contacts = pipelineContacts?.[meta.stage] ?? [];
+                    const Icon = meta.icon;
+                    return (
+                      <div key={meta.stage} className={`rounded-xl border ${meta.border} ${meta.bg} p-3`}>
+                        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-white/60">
+                          <Icon className="h-3.5 w-3.5" style={{ color: meta.color }} />
+                          <span className={`text-xs font-semibold ${meta.text}`}>{meta.label}</span>
+                          <Badge variant="secondary" className="ml-auto text-[10px]">{contacts.length}</Badge>
+                        </div>
+                        <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                          {contacts.length === 0 && (
+                            <p className="text-xs text-slate-400 py-2 text-center">No contacts</p>
+                          )}
+                          {contacts.map((c) => {
+                            const name = [c.firstName, c.lastName].filter(Boolean).join(" ") || c.email;
+                            const isTestUser = c.email.toLowerCase().endsWith("@agilno.com");
+                            return (
+                              <button
+                                key={c.id}
+                                onClick={() => setSelectedContactId(c.id)}
+                                className={`w-full flex items-center gap-2.5 rounded-lg border p-2.5 transition-all text-left group ${
+                                  isTestUser
+                                    ? "bg-amber-50/80 border-amber-200 hover:border-amber-300 hover:shadow-sm"
+                                    : "bg-white/80 border-white hover:border-slate-200 hover:shadow-sm"
+                                }`}
+                              >
+                                <div
+                                  className="flex h-8 w-8 items-center justify-center rounded-full text-white text-xs font-bold flex-shrink-0"
+                                  style={{ backgroundColor: isTestUser ? "#f59e0b" : meta.color }}
+                                >
+                                  {name.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <p className="text-sm font-medium text-slate-800 truncate group-hover:text-slate-900">{name}</p>
+                                    {isTestUser && (
+                                      <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[9px] px-1.5 py-0 flex-shrink-0">Test User</Badge>
+                                    )}
+                                  </div>
+                                  <p className="text-[11px] text-slate-400 truncate">{c.email}</p>
+                                </div>
+                                {c.cdate && (
+                                  <span className="text-[10px] text-slate-300 flex-shrink-0">{formatDate(c.cdate)}</span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Contact detail modal */}
+      <Dialog open={!!selectedContactId} onOpenChange={(o) => !o && setSelectedContactId(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Contact Details</DialogTitle>
+            <DialogDescription>Full profile, tags, automations &amp; email history</DialogDescription>
+          </DialogHeader>
+          {selectedContactId && <ContactDetail contactId={selectedContactId} />}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+// ─── Main Overview ────────────────────────────────────────────────────────────
 
 export function OverviewClient({ contacts, automations, campaigns, lists, tags }: Props) {
   const growthData  = useMemo(() => groupByMonth(contacts), [contacts]);
@@ -69,6 +283,15 @@ export function OverviewClient({ contacts, automations, campaigns, lists, tags }
     .sort((a, b) => new Date(b.cdate ?? 0).getTime() - new Date(a.cdate ?? 0).getTime())
     .slice(0, 8);
 
+  // Pipeline data from tags
+  const pipelineStages = useMemo(() => {
+    const stageNames = ["became_lead", "profile_created", "onboarding_complete"];
+    return stageNames.map((name) => {
+      const tag = tags.find((t) => t.tag.toLowerCase() === name.toLowerCase());
+      return { stage: name, count: Number(tag?.subscriber_count ?? 0) };
+    });
+  }, [tags]);
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -82,6 +305,9 @@ export function OverviewClient({ contacts, automations, campaigns, lists, tags }
           filename="licenselinkup-contacts"
         />
       </PageHeader>
+
+      {/* Conversion Pipeline */}
+      <ConversionPipeline stages={pipelineStages} totalContacts={contacts.length} />
 
       {/* Claude Bot — weekly intelligence */}
       <ClaudeBot />
@@ -214,7 +440,7 @@ export function OverviewClient({ contacts, automations, campaigns, lists, tags }
                   tick={{ fontSize: 11, fill: "#475569" }}
                   axisLine={false}
                   tickLine={false}
-                  width={120}
+                  width={160}
                 />
                 <Tooltip
                   contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: 12 }}
@@ -240,17 +466,23 @@ export function OverviewClient({ contacts, automations, campaigns, lists, tags }
           </CardHeader>
           <CardContent className="p-0">
             <ul className="divide-y divide-slate-100">
-              {recentContacts.map((c) => (
-                <li key={c.id} className="flex items-center justify-between px-6 py-2.5">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-slate-800">
-                      {[c.firstName, c.lastName].filter(Boolean).join(" ") || c.email}
-                    </p>
-                    <p className="truncate text-xs text-slate-400">{c.email}</p>
-                  </div>
-                  <span className="ml-4 flex-shrink-0 text-xs text-slate-400">{formatDate(c.cdate)}</span>
-                </li>
-              ))}
+              {recentContacts.map((c) => {
+                const isTest = c.email.toLowerCase().endsWith("@agilno.com");
+                return (
+                  <li key={c.id} className={`flex items-center justify-between px-6 py-2.5 ${isTest ? "bg-amber-50/50" : ""}`}>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <p className="truncate text-sm font-medium text-slate-800">
+                          {[c.firstName, c.lastName].filter(Boolean).join(" ") || c.email}
+                        </p>
+                        {isTest && <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[9px] px-1.5 py-0 flex-shrink-0">Test User</Badge>}
+                      </div>
+                      <p className="truncate text-xs text-slate-400">{c.email}</p>
+                    </div>
+                    <span className="ml-4 flex-shrink-0 text-xs text-slate-400">{formatDate(c.cdate)}</span>
+                  </li>
+                );
+              })}
             </ul>
           </CardContent>
         </Card>

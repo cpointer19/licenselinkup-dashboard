@@ -21,6 +21,7 @@ const LIST_DESCRIPTIONS: Record<string, string> = {
   "Master Contact List": "All platform contacts — the primary audience for LicenseLinkUp broadcasts.",
   "Peer Contacts":       "Verified members who have passed peer review and joined the professional network.",
   "Lance Contacts":      "Personal contacts of Lance — warm leads and direct relationships.",
+  "Lance's Contacts":    "Personal contacts of Lance — warm leads and direct relationships.",
 };
 
 export function ListsClient({ lists }: Props) {

@@ -36,7 +36,7 @@ const LIST_NAMES: Record<string, string> = {
 
 function listBadge(listId: string) {
   const names: Record<string, string> = {
-    "1": "Master", "2": "Peer", "3": "Lance",
+    "1": "Master", "2": "Peer", "3": "Lance's",
   };
   return names[listId] ?? `List ${listId}`;
 }

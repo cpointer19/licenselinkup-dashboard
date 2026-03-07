@@ -18,7 +18,14 @@ interface ContactDetailData {
   };
   tags: Array<{ id: string; tag: string; cdate?: string }>;
   lists: Array<{ id: string; list: string; status: string }>;
-  automations: Array<{ id: string; automation: string; status: string; completedElements: string; totalElements: string }>;
+  automations: Array<{
+    id: string;
+    automation: string;
+    automationName?: string | null;
+    status: string;
+    completedElements: string;
+    totalElements: string;
+  }>;
   emailActivities: Array<{ type?: string; tstamp?: string }>;
 }
 
@@ -44,8 +51,12 @@ export function ContactDetail({ contactId }: { contactId: string }) {
 
   const { contact, tags, lists, automations, emailActivities } = data;
   const name = [contact.firstName, contact.lastName].filter(Boolean).join(" ") || contact.email;
-  const listNames: Record<string, string> = { "1": "Master Contact List", "2": "Peer Contacts", "3": "Lance Contacts" };
+  const listNames: Record<string, string> = { "1": "Master Contact List", "2": "Peer Contacts", "3": "Lance's Contacts" };
   const autoStatus: Record<string, string> = { "0": "Inactive", "1": "Active", "2": "Completed" };
+
+  // Filter out automations without a resolved name (these are deleted/unknown automations)
+  const knownAutomations = automations.filter((a) => a.automationName);
+  const unknownCount = automations.length - knownAutomations.length;
 
   return (
     <div className="space-y-5 pt-2">
@@ -99,19 +110,19 @@ export function ContactDetail({ contactId }: { contactId: string }) {
       {/* Automations */}
       <section>
         <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
-          <Zap className="h-3.5 w-3.5" /> Automations ({automations.length})
+          <Zap className="h-3.5 w-3.5" /> Automations ({knownAutomations.length})
         </h3>
         <div className="space-y-1.5">
-          {automations.length === 0 && <p className="text-xs text-slate-400">No automation history</p>}
-          {automations.map((a) => {
+          {knownAutomations.length === 0 && <p className="text-xs text-slate-400">No automation history</p>}
+          {knownAutomations.map((a) => {
             const pct = a.totalElements !== "0"
               ? Math.round((+a.completedElements / +a.totalElements) * 100)
               : 0;
             return (
               <div key={a.id} className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-slate-700">Automation #{a.automation}</span>
-                  <Badge variant={a.status === "1" ? "success" : a.status === "2" ? "info" : "outline"} className="text-[10px]">
+                <div className="flex items-center justify-between text-xs gap-2">
+                  <span className="font-medium text-slate-700 truncate">{a.automationName}</span>
+                  <Badge variant={a.status === "1" ? "success" : a.status === "2" ? "info" : "outline"} className="text-[10px] flex-shrink-0">
                     {autoStatus[a.status] ?? "Unknown"}
                   </Badge>
                 </div>
@@ -122,6 +133,11 @@ export function ContactDetail({ contactId }: { contactId: string }) {
               </div>
             );
           })}
+          {unknownCount > 0 && (
+            <p className="text-[10px] text-slate-400 pt-1">
+              + {unknownCount} archived/deleted automation{unknownCount !== 1 ? "s" : ""} not shown
+            </p>
+          )}
         </div>
       </section>
 
