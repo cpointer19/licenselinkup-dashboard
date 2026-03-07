@@ -227,7 +227,11 @@ function ConversionPipeline({ stages, totalContacts }: { stages: { stage: string
               ) : (
                 <div className="grid grid-cols-3 gap-3">
                   {PIPELINE_META.map((meta) => {
-                    const contacts = pipelineContacts?.[meta.stage] ?? [];
+                    const contacts = [...(pipelineContacts?.[meta.stage] ?? [])].sort((a, b) => {
+                      const aReal = isRealLead(a.email) ? 0 : isTestUser(a.email) ? 2 : 1;
+                      const bReal = isRealLead(b.email) ? 0 : isTestUser(b.email) ? 2 : 1;
+                      return aReal - bReal;
+                    });
                     const Icon = meta.icon;
                     return (
                       <div key={meta.stage} className={`rounded-xl border ${meta.border} ${meta.bg} p-3`}>
