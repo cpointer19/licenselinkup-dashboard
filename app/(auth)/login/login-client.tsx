@@ -46,7 +46,7 @@ export function LoginClient() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#2E3946] via-[#1a2533] to-[#2E3946] px-4">
       {/* Background grid */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.04]"
@@ -58,7 +58,7 @@ export function LoginClient() {
       />
 
       {/* Glow orbs */}
-      <div className="pointer-events-none absolute left-1/4 top-1/4 h-72 w-72 rounded-full bg-blue-600 opacity-10 blur-3xl" />
+      <div className="pointer-events-none absolute left-1/4 top-1/4 h-72 w-72 rounded-full bg-[#5375FF] opacity-10 blur-3xl" />
       <div className="pointer-events-none absolute bottom-1/4 right-1/4 h-72 w-72 rounded-full bg-violet-600 opacity-10 blur-3xl" />
 
       <div
@@ -106,7 +106,7 @@ export function LoginClient() {
                   className={`w-full rounded-xl border bg-white/5 px-4 py-3 pr-11 text-sm text-white placeholder-slate-500 outline-none transition-all focus:ring-2 ${
                     error
                       ? "border-red-500/60 focus:ring-red-500/30"
-                      : "border-white/10 focus:border-blue-500/60 focus:ring-blue-500/20"
+                      : "border-white/10 focus:border-[#5375FF]/60 focus:ring-[#5375FF]/20"
                   }`}
                   autoComplete="current-password"
                 />
@@ -130,7 +130,7 @@ export function LoginClient() {
             <button
               type="submit"
               disabled={!password.trim() || loading}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition-all hover:from-blue-500 hover:to-blue-400 hover:shadow-blue-500/30 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#5375FF] to-[#6B8AFF] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-[#5375FF]/20 transition-all hover:from-[#6B8AFF] hover:to-[#5375FF] hover:shadow-[#5375FF]/30 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {loading ? (
                 <>

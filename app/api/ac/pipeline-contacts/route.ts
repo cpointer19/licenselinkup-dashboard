@@ -5,6 +5,13 @@ export const revalidate = 60;
 
 const PIPELINE_STAGES = ["became_lead", "profile_created", "onboarding_complete"];
 
+// Known real leads that should always appear in the became_lead stage
+const KNOWN_LEADS = new Set([
+  "germanyjohnson@kw.com",
+  "mikeusa03@aol.com",
+  "wade@wadewright.com",
+]);
+
 export async function GET() {
   try {
     const [contacts, tags] = await Promise.all([fetchAllContacts(), fetchTags()]);
@@ -57,6 +64,20 @@ export async function GET() {
             cdate: contact.cdate,
           });
         }
+      }
+    }
+
+    // Ensure known real leads appear in became_lead even if they lack the tag
+    const leadEmails = new Set(stages["became_lead"].map((c) => c.email.toLowerCase()));
+    for (const { contact } of contactTagResults) {
+      if (KNOWN_LEADS.has(contact.email.toLowerCase()) && !leadEmails.has(contact.email.toLowerCase())) {
+        stages["became_lead"].push({
+          id: contact.id,
+          email: contact.email,
+          firstName: contact.firstName,
+          lastName: contact.lastName,
+          cdate: contact.cdate,
+        });
       }
     }
 

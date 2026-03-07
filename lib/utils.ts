@@ -20,3 +20,11 @@ export function formatPercent(val: number, total: number): string {
 export function truncate(str: string, n: number): string {
   return str.length > n ? str.slice(0, n - 1) + "…" : str;
 }
+
+/** Convert snake_case tag names to Title Case (e.g. "feasibility_responder" → "Feasibility Responder") */
+export function formatTagName(tag: string): string {
+  return tag
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
+}

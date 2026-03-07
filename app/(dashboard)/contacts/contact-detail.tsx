@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatTagName } from "@/lib/utils";
 import { Mail, Tag, Zap, List, Clock } from "lucide-react";
 
 interface ContactDetailData {
@@ -62,7 +62,7 @@ export function ContactDetail({ contactId }: { contactId: string }) {
     <div className="space-y-5 pt-2">
       {/* Header */}
       <div className="flex items-center gap-3 border-b pb-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 font-bold text-lg">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#5375FF]/10 text-[#5375FF] font-bold text-lg">
           {name.charAt(0).toUpperCase()}
         </div>
         <div>
@@ -84,7 +84,7 @@ export function ContactDetail({ contactId }: { contactId: string }) {
         <div className="flex flex-wrap gap-1.5">
           {tags.length === 0 && <span className="text-xs text-slate-400">No tags</span>}
           {tags.map((t) => (
-            <Badge key={t.id} variant="secondary" className="text-xs">{t.tag}</Badge>
+            <Badge key={t.id} variant="secondary" className="text-xs">{formatTagName(t.tag)}</Badge>
           ))}
         </div>
       </section>
@@ -127,7 +127,7 @@ export function ContactDetail({ contactId }: { contactId: string }) {
                   </Badge>
                 </div>
                 <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
-                  <div className="h-full rounded-full bg-blue-500 transition-all" style={{ width: `${pct}%` }} />
+                  <div className="h-full rounded-full bg-[#5375FF] transition-all" style={{ width: `${pct}%` }} />
                 </div>
                 <p className="mt-1 text-[10px] text-slate-400">{a.completedElements}/{a.totalElements} steps · {pct}%</p>
               </div>

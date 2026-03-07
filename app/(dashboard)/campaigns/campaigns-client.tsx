@@ -76,7 +76,7 @@ export function CampaignsClient({ campaigns }: Props) {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatsCard title="Total Sent"    value={sent.toLocaleString()}   icon={Mail}          iconColor="text-blue-600"    iconBg="bg-blue-50" />
+        <StatsCard title="Total Sent"    value={sent.toLocaleString()}   icon={Mail}          iconColor="text-[#5375FF]"    iconBg="bg-[#5375FF]/10" />
         <StatsCard title="Avg Open Rate" value={`${avgOpen}%`}           icon={TrendingUp}     iconColor="text-emerald-600" iconBg="bg-emerald-50" />
         <StatsCard title="Avg Click Rate" value={`${avgClick}%`}         icon={MousePointer}   iconColor="text-violet-600" iconBg="bg-violet-50" />
         <StatsCard title="Unsubscribes"  value={unsubs.toLocaleString()} icon={UserX}          iconColor="text-red-500"    iconBg="bg-red-50" />
@@ -103,7 +103,7 @@ export function CampaignsClient({ campaigns }: Props) {
               <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: 12 }} />
               <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
-              <Bar dataKey="opens"  name="Unique Opens"  fill="#3b82f6" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="opens"  name="Unique Opens"  fill="#5375FF" radius={[4, 4, 0, 0]} />
               <Bar dataKey="clicks" name="Unique Clicks" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -120,7 +120,7 @@ export function CampaignsClient({ campaigns }: Props) {
               <button
                 key={s}
                 onClick={() => setSort(s)}
-                className={`rounded px-2 py-0.5 capitalize transition-colors ${sort === s ? "bg-blue-100 text-blue-700 font-medium" : "hover:bg-slate-100"}`}
+                className={`rounded px-2 py-0.5 capitalize transition-colors ${sort === s ? "bg-[#5375FF]/10 text-[#5375FF] font-medium" : "hover:bg-slate-100"}`}
               >
                 {s}
               </button>

@@ -88,7 +88,7 @@ export function AutomationDetailClient({ automation, blocks, contacts, totalCont
             {[
               { label: "Entered",   value: automation.entered,  icon: Users,       color: "text-slate-600" },
               { label: "Exited",    value: automation.exited,   icon: CheckCircle, color: "text-emerald-600" },
-              { label: "Active Now",value: String(active),      icon: Clock,       color: "text-blue-600" },
+              { label: "Active Now",value: String(active),      icon: Clock,       color: "text-[#5375FF]" },
               { label: "Completed", value: String(completed),   icon: CheckCircle, color: "text-emerald-600" },
             ].map(({ label, value, icon: Icon, color }) => (
               <div key={label} className="rounded-xl bg-slate-50 p-3 text-center">

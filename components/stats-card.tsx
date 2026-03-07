@@ -12,7 +12,7 @@ interface StatsCardProps {
   trend?: { value: number; label: string };
 }
 
-export function StatsCard({ title, value, subtitle, icon: Icon, iconColor = "text-blue-600", iconBg = "bg-blue-50", trend }: StatsCardProps) {
+export function StatsCard({ title, value, subtitle, icon: Icon, iconColor = "text-[#5375FF]", iconBg = "bg-[#5375FF]/10", trend }: StatsCardProps) {
   return (
     <Card>
       <CardContent className="p-5">

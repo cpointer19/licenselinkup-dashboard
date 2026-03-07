@@ -108,8 +108,8 @@ export function ContactsClient({ contacts }: Props) {
                 >
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-50">
-                        <User className="h-3.5 w-3.5 text-blue-500" />
+                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#5375FF]/10">
+                        <User className="h-3.5 w-3.5 text-[#5375FF]" />
                       </div>
                       <span className="font-medium text-slate-800">{name}</span>
                     </div>

@@ -158,16 +158,16 @@ export function ClaudeBot() {
   };
 
   return (
-    <Card className="border-blue-100 bg-gradient-to-br from-blue-50/60 to-violet-50/40 overflow-hidden">
+    <Card className="border-[#E9EAEB] bg-gradient-to-br from-[#5375FF]/5 to-violet-50/30 overflow-hidden">
       <CardContent className="p-0">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-blue-100">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#E9EAEB]">
           <div className="flex items-center gap-3">
             <div className="relative flex h-10 w-10 items-center justify-center">
               {pulsing && (
-                <span className="absolute inset-0 rounded-full bg-blue-400 opacity-25 animate-ping" />
+                <span className="absolute inset-0 rounded-full bg-[#5375FF] opacity-25 animate-ping" />
               )}
-              <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-violet-600 shadow-md">
+              <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#5375FF] to-violet-600 shadow-md">
                 <Sparkles className="h-5 w-5 text-white" />
               </div>
             </div>
@@ -188,16 +188,16 @@ export function ClaudeBot() {
         </div>
 
         {/* Two-column layout: report + metrics */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-blue-100">
+        <div className="grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-[#E9EAEB]">
           {/* Left: typed report (takes 2/3) */}
           <div className="lg:col-span-2">
             <div ref={scrollRef} className="h-80 overflow-y-auto px-5 py-4 scroll-smooth">
               {loading && (
                 <div className="flex items-center gap-2 text-sm text-slate-500">
                   <span className="flex gap-1">
-                    <span className="h-2 w-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <span className="h-2 w-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <span className="h-2 w-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                    <span className="h-2 w-2 rounded-full bg-[#5375FF] animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="h-2 w-2 rounded-full bg-[#5375FF] animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="h-2 w-2 rounded-full bg-[#5375FF] animate-bounce" style={{ animationDelay: "300ms" }} />
                   </span>
                   Pulling your data…
                 </div>
@@ -215,7 +215,7 @@ export function ClaudeBot() {
                     )
                   )}
                   {typing && (
-                    <span className="inline-block h-4 w-0.5 bg-blue-500 animate-pulse ml-0.5 translate-y-0.5" />
+                    <span className="inline-block h-4 w-0.5 bg-[#5375FF] animate-pulse ml-0.5 translate-y-0.5" />
                   )}
                 </div>
               )}
@@ -228,16 +228,16 @@ export function ClaudeBot() {
 
             {/* KPI mini cards */}
             <div className="space-y-2">
-              <div className="flex items-center gap-3 rounded-lg bg-white/70 p-3 border border-blue-100">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50">
-                  <Users className="h-4 w-4 text-blue-600" />
+              <div className="flex items-center gap-3 rounded-lg bg-white/70 p-3 border border-[#E9EAEB]">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#5375FF]/10">
+                  <Users className="h-4 w-4 text-[#5375FF]" />
                 </div>
                 <div>
                   <p className="text-lg font-bold text-slate-900">{data?.newContacts.count ?? "—"}</p>
                   <p className="text-[11px] text-slate-500">New Contacts</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 rounded-lg bg-white/70 p-3 border border-blue-100">
+              <div className="flex items-center gap-3 rounded-lg bg-white/70 p-3 border border-[#E9EAEB]">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50">
                   <Zap className="h-4 w-4 text-violet-600" />
                 </div>
@@ -252,7 +252,7 @@ export function ClaudeBot() {
 
         {/* Dates footer */}
         {data && (
-          <div className="flex items-center justify-between border-t border-blue-100 px-5 py-2.5 text-xs text-slate-400">
+          <div className="flex items-center justify-between border-t border-[#E9EAEB] px-5 py-2.5 text-xs text-slate-400">
             <span>Week of {data.week.start} → {data.week.end}</span>
             <span>{data.totalContacts.toLocaleString()} total contacts</span>
           </div>

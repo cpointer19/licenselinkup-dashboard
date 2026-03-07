@@ -6,6 +6,7 @@ import type { ACTag } from "@/lib/activecampaign";
 import { PageHeader } from "@/components/page-header";
 import { CsvExportButton } from "@/components/csv-export-button";
 import { Input } from "@/components/ui/input";
+import { formatTagName } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -29,8 +30,8 @@ function isFunnelTag(tag: string) {
 
 function tagColor(count: number, max: number) {
   const pct = max ? count / max : 0;
-  if (pct > 0.66) return "bg-blue-600 text-white";
-  if (pct > 0.33) return "bg-blue-200 text-blue-900";
+  if (pct > 0.66) return "bg-[#5375FF] text-white";
+  if (pct > 0.33) return "bg-[#5375FF]/20 text-[#2E3946]";
   return "bg-slate-100 text-slate-700";
 }
 
@@ -91,7 +92,7 @@ export function TagsClient({ tags }: Props) {
         <TabsContent value="cloud" className="space-y-5">
           {funnelTags.length > 0 && (
             <Card>
-              <CardHeader><CardTitle className="flex items-center gap-2"><Tag className="h-4 w-4 text-blue-500" /> Funnel Tags</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="flex items-center gap-2"><Tag className="h-4 w-4 text-[#5375FF]" /> Funnel Tags</CardTitle></CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
                   {funnelTags.map((t) => (
@@ -99,7 +100,7 @@ export function TagsClient({ tags }: Props) {
                       key={t.id}
                       className={`rounded-full px-3 py-1 text-sm font-medium cursor-default ${tagColor(Number(t.subscriber_count ?? 0), maxCount)}`}
                     >
-                      {t.tag}
+                      {formatTagName(t.tag)}
                       <span className="ml-1.5 opacity-70 text-xs">({t.subscriber_count ?? 0})</span>
                     </div>
                   ))}
@@ -121,7 +122,7 @@ export function TagsClient({ tags }: Props) {
                       key={t.id}
                       className={`rounded-full px-3 py-1 font-medium cursor-default transition-transform hover:scale-105 ${size} ${tagColor(count, maxCount)}`}
                     >
-                      {t.tag}
+                      {formatTagName(t.tag)}
                       <span className="ml-1.5 opacity-60 text-[10px]">({count})</span>
                     </div>
                   );
@@ -152,7 +153,7 @@ export function TagsClient({ tags }: Props) {
                   else if (isFunnelTag(t.tag)) category = "Funnel";
                   return (
                     <TableRow key={t.id}>
-                      <TableCell className="font-medium text-slate-800">{t.tag}</TableCell>
+                      <TableCell className="font-medium text-slate-800">{formatTagName(t.tag)}</TableCell>
                       <TableCell>
                         <Badge variant={category === "Funnel" ? "default" : category === "State" ? "info" : "secondary"} className="text-[10px]">
                           {category}
@@ -161,7 +162,7 @@ export function TagsClient({ tags }: Props) {
                       <TableCell className="text-right font-semibold text-slate-700">{count.toLocaleString()}</TableCell>
                       <TableCell className="min-w-[100px]">
                         <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-                          <div className="h-full rounded-full bg-blue-500" style={{ width: `${pct}%` }} />
+                          <div className="h-full rounded-full bg-[#5375FF]" style={{ width: `${pct}%` }} />
                         </div>
                       </TableCell>
                     </TableRow>
@@ -196,7 +197,7 @@ export function TagsClient({ tags }: Props) {
                           <p className="font-semibold text-slate-800">{state}</p>
                           <p className="text-xs text-slate-400">contacts</p>
                         </div>
-                        <span className="text-xl font-bold text-blue-600">{count}</span>
+                        <span className="text-xl font-bold text-[#5375FF]">{count}</span>
                       </div>
                     );
                   })}

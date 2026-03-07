@@ -80,12 +80,12 @@ export function AutomationsClient({ automations }: Props) {
                     <p className="text-lg font-bold text-slate-900">{auto.totalContacts}</p>
                     <p className="text-[10px] text-slate-400">Total</p>
                   </div>
-                  <div className="rounded-lg bg-blue-50 p-2">
-                    <div className="flex items-center justify-center gap-1 text-blue-500">
+                  <div className="rounded-lg bg-[#5375FF]/10 p-2">
+                    <div className="flex items-center justify-center gap-1 text-[#5375FF]">
                       <Clock className="h-3 w-3" />
                     </div>
-                    <p className="text-lg font-bold text-blue-700">{auto.activeContacts}</p>
-                    <p className="text-[10px] text-blue-400">Active</p>
+                    <p className="text-lg font-bold text-[#5375FF]">{auto.activeContacts}</p>
+                    <p className="text-[10px] text-[#5375FF]/60">Active</p>
                   </div>
                   <div className="rounded-lg bg-emerald-50 p-2">
                     <div className="flex items-center justify-center gap-1 text-emerald-500">

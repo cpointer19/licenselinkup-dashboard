@@ -18,7 +18,7 @@ import { PageHeader } from "@/components/page-header";
 import { CsvExportButton } from "@/components/csv-export-button";
 import { ClaudeBot } from "@/components/claude-bot";
 import { ContactDetail } from "./contacts/contact-detail";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatTagName } from "@/lib/utils";
 
 interface Props {
   contacts: ACContact[];
@@ -28,7 +28,7 @@ interface Props {
   tags: ACTag[];
 }
 
-const COLORS = ["#3b82f6", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#06b6d4"];
+const COLORS = ["#5375FF", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#06b6d4"];
 
 function groupByMonth(contacts: ACContact[]) {
   const map = new Map<string, number>();
@@ -54,7 +54,7 @@ function topTags(tags: ACTag[], n = 10) {
     .sort((a, b) => Number(b.subscriber_count ?? 0) - Number(a.subscriber_count ?? 0))
     .slice(0, n)
     .map((t) => ({
-      name: t.tag.length > 22 ? t.tag.slice(0, 20) + "…" : t.tag,
+      name: (() => { const n = formatTagName(t.tag); return n.length > 22 ? n.slice(0, 20) + "…" : n; })(),
       value: Number(t.subscriber_count ?? 0),
     }));
 }
@@ -86,7 +86,7 @@ function isRealLead(email: string): boolean {
 // ─── Conversion Pipeline ──────────────────────────────────────────────────────
 
 const PIPELINE_META = [
-  { stage: "became_lead",         label: "Leads (Signup)",      icon: UserCheck,      color: "#3b82f6", bg: "bg-blue-50",    border: "border-blue-200",    text: "text-blue-700" },
+  { stage: "became_lead",         label: "Leads (Signup)",      icon: UserCheck,      color: "#5375FF", bg: "bg-[#5375FF]/10",    border: "border-[#5375FF]/20",    text: "text-[#5375FF]" },
   { stage: "profile_created",     label: "Profile Created",     icon: ClipboardCheck, color: "#8b5cf6", bg: "bg-violet-50",  border: "border-violet-200",  text: "text-violet-700" },
   { stage: "onboarding_complete", label: "Founding Members",    icon: Award,          color: "#10b981", bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700" },
 ];
@@ -361,8 +361,8 @@ export function OverviewClient({ contacts, automations, campaigns, lists, tags }
           value={contacts.length}
           subtitle="All time"
           icon={Users}
-          iconColor="text-blue-600"
-          iconBg="bg-blue-50"
+          iconColor="text-[#5375FF]"
+          iconBg="bg-[#5375FF]/10"
         />
         <StatsCard
           title="Active Automations"
@@ -403,8 +403,8 @@ export function OverviewClient({ contacts, automations, campaigns, lists, tags }
               <AreaChart data={growthData} margin={{ top: 4, right: 12, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="gradTotal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#5375FF" stopOpacity={0.15} />
+                    <stop offset="95%" stopColor="#5375FF" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="gradNew" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.15} />
@@ -417,7 +417,7 @@ export function OverviewClient({ contacts, automations, campaigns, lists, tags }
                 <Tooltip
                   contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: 12 }}
                 />
-                <Area type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={2} fill="url(#gradTotal)" name="Total" />
+                <Area type="monotone" dataKey="total" stroke="#5375FF" strokeWidth={2} fill="url(#gradTotal)" name="Total" />
                 <Area type="monotone" dataKey="new" stroke="#8b5cf6" strokeWidth={2} fill="url(#gradNew)" name="New" />
               </AreaChart>
             </ResponsiveContainer>

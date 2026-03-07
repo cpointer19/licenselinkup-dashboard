@@ -15,7 +15,7 @@ interface Props {
   lists: ACList[];
 }
 
-const COLORS = ["#3b82f6", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444"];
+const COLORS = ["#5375FF", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444"];
 
 const LIST_DESCRIPTIONS: Record<string, string> = {
   "Master Contact List": "All platform contacts — the primary audience for LicenseLinkUp broadcasts.",
@@ -50,7 +50,7 @@ export function ListsClient({ lists }: Props) {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-        <StatsCard title="Total Lists"       value={lists.length}                  icon={List}   iconColor="text-blue-600"  iconBg="bg-blue-50" />
+        <StatsCard title="Total Lists"       value={lists.length}                  icon={List}   iconColor="text-[#5375FF]"  iconBg="bg-[#5375FF]/10" />
         <StatsCard title="Total Subscribers" value={totalSubs.toLocaleString()}    icon={Users}  iconColor="text-emerald-600" iconBg="bg-emerald-50" />
         <StatsCard title="Unsubscribers"     value={totalUnsubs.toLocaleString()}  icon={UserX}  iconColor="text-red-500"  iconBg="bg-red-50" />
       </div>
