@@ -524,16 +524,14 @@ export function OverviewClient({ contacts, automations, campaigns, lists, tags }
           <CardContent className="p-0">
             <ul className="divide-y divide-slate-100">
               {recentContacts.map((c) => {
-                const test = isTestUser(c.email);
                 const realLead = isRealLead(c.email);
                 return (
-                  <li key={c.id} className={`flex items-center justify-between px-6 py-2.5 ${test ? "bg-amber-50/50" : realLead ? "bg-emerald-50/50" : ""}`}>
+                  <li key={c.id} className={`flex items-center justify-between px-6 py-2.5 ${realLead ? "bg-emerald-50/50" : ""}`}>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
                         <p className="truncate text-sm font-medium text-slate-800">
                           {[c.firstName, c.lastName].filter(Boolean).join(" ") || c.email}
                         </p>
-                        {test && <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[9px] px-1.5 py-0 flex-shrink-0">Test User</Badge>}
                         {realLead && <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[9px] px-1.5 py-0 flex-shrink-0">Real Lead</Badge>}
                       </div>
                       <p className="truncate text-xs text-slate-400">{c.email}</p>
