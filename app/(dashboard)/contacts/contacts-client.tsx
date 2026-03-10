@@ -14,7 +14,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import { ContactDetail } from "./contact-detail";
-import { formatDate, truncate } from "@/lib/utils";
+import { formatDateTime, truncate } from "@/lib/utils";
 
 interface Contact {
   id: string;
@@ -138,7 +138,7 @@ export function ContactsClient({ contacts }: Props) {
                       ))}
                     </div>
                   </TableCell>
-                  <TableCell className="text-slate-500 text-xs">{formatDate(c.cdate)}</TableCell>
+                  <TableCell className="text-slate-500 text-xs whitespace-nowrap">{formatDateTime(c.cdate)}</TableCell>
                 </TableRow>
               );
             })}

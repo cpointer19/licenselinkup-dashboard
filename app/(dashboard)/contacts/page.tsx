@@ -34,20 +34,12 @@ async function getData() {
     })
   );
 
-  // Sort: real leads first, then by pipeline stage (became_lead > profile_created > onboarding_complete)
-  const REAL_LEADS = new Set(["germanyjohnson@kw.com", "mikeusa03@aol.com", "wade@wadewright.com"]);
-  const STAGE_TAGS = ["became_lead", "profile_created", "onboarding_complete"];
-
-  function contactSortKey(c: { email: string; tagNames: string[] }) {
-    if (REAL_LEADS.has(c.email.toLowerCase())) return 0;
-    for (let i = 0; i < STAGE_TAGS.length; i++) {
-      const formatted = formatTagName(STAGE_TAGS[i]);
-      if (c.tagNames.some((t) => t.toLowerCase() === formatted.toLowerCase())) return i + 1;
-    }
-    return STAGE_TAGS.length + 1;
-  }
-
-  enriched.sort((a, b) => contactSortKey(a) - contactSortKey(b));
+  // Sort: most recently signed up first
+  enriched.sort((a, b) => {
+    const ta = a.cdate ? new Date(a.cdate).getTime() : 0;
+    const tb = b.cdate ? new Date(b.cdate).getTime() : 0;
+    return tb - ta;
+  });
 
   return { contacts: enriched };
 }

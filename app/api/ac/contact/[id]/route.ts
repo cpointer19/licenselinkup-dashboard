@@ -47,11 +47,20 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     // Build tag ID → tag name map
     const tagMap = new Map(allTags.map((t) => [t.id, t.tag]));
 
-    // Enrich automations with names
-    const automations = contactAutomations.map((ca) => ({
+    // Enrich automations with names, then deduplicate by automation ID
+    // (AC can store multiple enrollment records per automation; keep the most recent)
+    const enriched = contactAutomations.map((ca) => ({
       ...ca,
       automationName: autoMap.get(ca.automation) ?? null,
     }));
+    const seen = new Map<string, typeof enriched[0]>();
+    for (const ca of enriched) {
+      const existing = seen.get(ca.automation);
+      if (!existing || (ca.adddate ?? "") > (existing.adddate ?? "")) {
+        seen.set(ca.automation, ca);
+      }
+    }
+    const automations = Array.from(seen.values());
 
     // Resolve tag names
     const tags = contactTags.map((ct) => ({
