@@ -138,6 +138,8 @@ async function getData(): Promise<{ ads: AdRow[] }> {
       siteSource: entry.siteSource,
     }))
     .filter((a) => a.becameLead > 0)
+    // Drop rows where the ad name looks like a raw UTM field name (bad tracking data)
+    .filter((a) => !a.rawAdName.toLowerCase().startsWith("utm_"))
     .sort((a, b) => b.becameLead - a.becameLead);
 
   return { ads };

@@ -93,9 +93,12 @@ function CustomTooltip({ active, payload, label }: any) {
 export function MetaAdsClient({ ads }: Props) {
   const [filter, setFilter] = useState<"all" | "instagram" | "facebook">("all");
 
-  // Exclude test ads globally
+  // Exclude test ads and rows with raw UTM field names (bad tracking data)
   const visibleAds = useMemo(
-    () => ads.filter((a) => !a.rawAdName.toLowerCase().includes("test")),
+    () => ads.filter((a) =>
+      !a.rawAdName.toLowerCase().includes("test") &&
+      !a.rawAdName.toLowerCase().startsWith("utm_")
+    ),
     [ads]
   );
 
