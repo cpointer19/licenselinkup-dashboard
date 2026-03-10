@@ -89,15 +89,19 @@ interface PipelineContact {
 }
 
 function ConversionPipeline({ stages, totalContacts, rejectedCount }: { stages: { stage: string; count: number }[]; totalContacts: number; rejectedCount: number }) {
-  const maxCount = Math.max(...stages.map((s) => s.count), 1);
-  const firstCount = stages[0]?.count ?? 0;
-  const lastCount = stages[stages.length - 1]?.count ?? 0;
-  const overallRate = firstCount > 0 ? ((lastCount / firstCount) * 100).toFixed(1) : "0";
-
   const [expanded, setExpanded] = useState(true);
   const [pipelineContacts, setPipelineContacts] = useState<Record<string, PipelineContact[]> | null>(null);
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
+
+  const effectiveStages = stages.map((s) => ({
+    ...s,
+    count: pipelineContacts ? (pipelineContacts[s.stage]?.length ?? 0) : s.count,
+  }));
+  const maxCount = Math.max(...effectiveStages.map((s) => s.count), 1);
+  const firstCount = effectiveStages[0]?.count ?? 0;
+  const lastCount = effectiveStages[effectiveStages.length - 1]?.count ?? 0;
+  const overallRate = firstCount > 0 ? ((lastCount / firstCount) * 100).toFixed(1) : "0";
 
   // Auto-fetch contacts on mount since expanded by default
   useEffect(() => {
@@ -168,11 +172,11 @@ function ConversionPipeline({ stages, totalContacts, rejectedCount }: { stages: 
         <CardContent>
           {/* Stage summary cards */}
           <div className="flex items-stretch gap-3">
-            {stages.map((stage, idx) => {
+            {effectiveStages.map((stage, idx) => {
               const meta = PIPELINE_META.find((m) => m.stage === stage.stage) ?? PIPELINE_META[0];
               const Icon = meta.icon;
               const barPct = Math.max((stage.count / maxCount) * 100, 8);
-              const nextStage = stages[idx + 1];
+              const nextStage = effectiveStages[idx + 1];
               const advanceRate = nextStage && stage.count > 0
                 ? ((nextStage.count / stage.count) * 100).toFixed(0)
                 : null;
@@ -198,7 +202,7 @@ function ConversionPipeline({ stages, totalContacts, rejectedCount }: { stages: 
                       />
                     </div>
                   </div>
-                  {idx < stages.length - 1 && (
+                  {idx < effectiveStages.length - 1 && (
                     <div className="flex flex-col items-center gap-1 flex-shrink-0">
                       <ArrowRight className="h-5 w-5 text-slate-300" />
                       {advanceRate && (

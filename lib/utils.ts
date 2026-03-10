@@ -36,10 +36,14 @@ export function truncate(str: string, n: number): string {
   return str.length > n ? str.slice(0, n - 1) + "…" : str;
 }
 
-/** Returns true for internal test accounts (agilno.com domain or pointercu* emails) */
+/** Returns true for internal test accounts (agilno.com domain, pointercu* or testing1 emails) */
 export function isTestUser(email: string): boolean {
   const lower = email.toLowerCase();
-  return lower.endsWith("@agilno.com") || lower.startsWith("pointercu");
+  return (
+    lower.endsWith("@agilno.com") ||
+    lower.startsWith("pointercu") ||
+    lower === "testing1@gmail.com"
+  );
 }
 
 /** Convert snake_case tag names to Title Case (e.g. "feasibility_responder" → "Feasibility Responder") */
