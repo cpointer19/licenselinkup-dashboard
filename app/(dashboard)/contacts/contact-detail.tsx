@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate, formatTagName } from "@/lib/utils";
-import { Mail, Tag, Zap, List, Clock } from "lucide-react";
+import { Mail, Tag, Zap, List, Clock, MapPin } from "lucide-react";
 
 interface ContactDetailData {
   contact: {
@@ -27,6 +27,7 @@ interface ContactDetailData {
     totalElements: string;
   }>;
   emailActivities: Array<{ type?: string; tstamp?: string }>;
+  attribution?: Record<string, string>;
 }
 
 export function ContactDetail({ contactId }: { contactId: string }) {
@@ -49,7 +50,7 @@ export function ContactDetail({ contactId }: { contactId: string }) {
     );
   }
 
-  const { contact, tags, lists, automations, emailActivities } = data;
+  const { contact, tags, lists, automations, emailActivities, attribution } = data;
   const name = [contact.firstName, contact.lastName].filter(Boolean).join(" ") || contact.email;
   const listNames: Record<string, string> = { "1": "Master Contact List", "2": "Peer Contacts", "3": "Lance's Contacts" };
   const autoStatus: Record<string, string> = { "0": "Inactive", "1": "Active", "2": "Completed" };
@@ -153,6 +154,23 @@ export function ContactDetail({ contactId }: { contactId: string }) {
                 <Clock className="h-3 w-3 text-slate-400 flex-shrink-0" />
                 <span className="capitalize">{e.type ?? "event"}</span>
                 <span className="ml-auto text-slate-400">{formatDate(e.tstamp)}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Attribution */}
+      {attribution && Object.keys(attribution).length > 0 && (
+        <section>
+          <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
+            <MapPin className="h-3.5 w-3.5" /> Attribution
+          </h3>
+          <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2.5 grid grid-cols-2 gap-x-4 gap-y-1.5">
+            {Object.entries(attribution).map(([label, value]) => (
+              <div key={label} className="contents">
+                <span className="text-xs text-slate-500">{label}</span>
+                <span className="text-xs font-medium text-slate-700 truncate" title={value}>{value}</span>
               </div>
             ))}
           </div>

@@ -93,8 +93,8 @@ export async function fetchContactAutomationsByAutomation(automationId: string):
 
 export async function fetchContactAutomationsByContact(contactId: string): Promise<ACContactAutomation[]> {
   const data = await acFetch<{ contactAutomations: ACContactAutomation[] }>(
-    "/contactAutomations",
-    { contact: contactId, limit: "100" }
+    `/contacts/${contactId}/contactAutomations`,
+    { limit: "100" }
   );
   return data.contactAutomations ?? [];
 }
@@ -239,6 +239,31 @@ export interface ACList {
 export async function fetchLists(): Promise<ACList[]> {
   const data = await acFetch<{ lists: ACList[] }>("/lists", { limit: "100" });
   return data.lists ?? [];
+}
+
+// ─── Custom Fields ───────────────────────────────────────────────────────────
+
+export interface ACField {
+  id: string;
+  title: string;
+  perstag: string;
+}
+
+export async function fetchFields(): Promise<ACField[]> {
+  const data = await acFetch<{ fields: ACField[] }>("/fields", { limit: "100" });
+  return data.fields ?? [];
+}
+
+export interface ACFieldValue {
+  id: string;
+  contact: string;
+  field: string;
+  value: string;
+}
+
+export async function fetchContactFieldValues(contactId: string): Promise<ACFieldValue[]> {
+  const data = await acFetch<{ fieldValues: ACFieldValue[] }>(`/contacts/${contactId}/fieldValues`);
+  return data.fieldValues ?? [];
 }
 
 // ─── Email Activities (for contact detail) ───────────────────────────────────
