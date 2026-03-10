@@ -234,6 +234,11 @@ export function MetaAdsClient({ ads }: Props) {
                 />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: "#f8fafc" }} />
                 <Legend
+                  payload={[
+                    { value: "Became Lead",     type: "circle", color: STAGE_COLORS.becameLead },
+                    { value: "Profile Created", type: "circle", color: STAGE_COLORS.profileCreated },
+                    { value: "Founding Member", type: "circle", color: STAGE_COLORS.foundingMember },
+                  ]}
                   iconType="circle"
                   iconSize={8}
                   formatter={(v) => <span style={{ fontSize: 12, color: "#475569" }}>{v}</span>}
