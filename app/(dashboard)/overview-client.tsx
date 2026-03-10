@@ -75,9 +75,9 @@ function isRealLead(email: string): boolean {
 // ─── Conversion Pipeline ──────────────────────────────────────────────────────
 
 const PIPELINE_META = [
-  { stage: "became_lead",         label: "Leads (Signup)",      icon: UserCheck,      color: "#5375FF", bg: "bg-[#5375FF]/10",    border: "border-[#5375FF]/20",    text: "text-[#5375FF]" },
-  { stage: "profile_created",     label: "Profile Created",     icon: ClipboardCheck, color: "#8b5cf6", bg: "bg-violet-50",  border: "border-violet-200",  text: "text-violet-700" },
-  { stage: "onboarding_complete", label: "Founding Members",    icon: Award,          color: "#10b981", bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700" },
+  { stage: "became_lead",         label: "Leads (Signup)",      subtext: "These people left their email on the landing page.",                                                                        icon: UserCheck,      color: "#5375FF", bg: "bg-[#5375FF]/10",    border: "border-[#5375FF]/20",    text: "text-[#5375FF]" },
+  { stage: "profile_created",     label: "Profile Created",     subtext: "These people verified their email + left their name and role and continued through the sign up flow.",                      icon: ClipboardCheck, color: "#8b5cf6", bg: "bg-violet-50",  border: "border-violet-200",  text: "text-violet-700" },
+  { stage: "onboarding_complete", label: "Founding Members",    subtext: "We've vetted these people and verified they have an active license.",                                                        icon: Award,          color: "#10b981", bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700" },
 ];
 
 interface PipelineContact {
@@ -234,10 +234,13 @@ function ConversionPipeline({ stages, totalContacts, rejectedCount }: { stages: 
                     const Icon = meta.icon;
                     return (
                       <div key={meta.stage} className={`rounded-xl border ${meta.border} ${meta.bg} p-3`}>
-                        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-white/60">
-                          <Icon className="h-3.5 w-3.5" style={{ color: meta.color }} />
-                          <span className={`text-xs font-semibold ${meta.text}`}>{meta.label}</span>
-                          <Badge variant="secondary" className="ml-auto text-[10px]">{contacts.length}</Badge>
+                        <div className="mb-3 pb-2 border-b border-white/60">
+                          <div className="flex items-center gap-2">
+                            <Icon className="h-3.5 w-3.5" style={{ color: meta.color }} />
+                            <span className={`text-xs font-semibold ${meta.text}`}>{meta.label}</span>
+                            <Badge variant="secondary" className="ml-auto text-[10px]">{contacts.length}</Badge>
+                          </div>
+                          <p className="text-[10px] text-slate-400 mt-1 leading-tight">{meta.subtext}</p>
                         </div>
                         <div className="space-y-1.5 max-h-64 overflow-y-auto">
                           {contacts.length === 0 && (
