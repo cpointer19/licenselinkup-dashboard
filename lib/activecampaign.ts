@@ -184,6 +184,23 @@ export async function fetchContactTags(contactId: string): Promise<ACContactTag[
   return data.contactTags ?? [];
 }
 
+/** Fetch ALL contact-tag relationships in bulk (much faster than per-contact calls) */
+export async function fetchAllContactTags(): Promise<ACContactTag[]> {
+  const all: ACContactTag[] = [];
+  let offset = 0;
+  while (true) {
+    const data = await acFetch<{ contactTags: ACContactTag[] }>(
+      "/contactTags",
+      { limit: "100", offset: String(offset) }
+    );
+    const items = data.contactTags ?? [];
+    all.push(...items);
+    if (items.length < 100) break;
+    offset += 100;
+  }
+  return all;
+}
+
 // ─── Contact Lists ───────────────────────────────────────────────────────────
 
 export interface ACContactList {
@@ -264,6 +281,23 @@ export interface ACFieldValue {
 export async function fetchContactFieldValues(contactId: string): Promise<ACFieldValue[]> {
   const data = await acFetch<{ fieldValues: ACFieldValue[] }>(`/contacts/${contactId}/fieldValues`);
   return data.fieldValues ?? [];
+}
+
+/** Fetch ALL field values in bulk (much faster than per-contact calls) */
+export async function fetchAllFieldValues(): Promise<ACFieldValue[]> {
+  const all: ACFieldValue[] = [];
+  let offset = 0;
+  while (true) {
+    const data = await acFetch<{ fieldValues: ACFieldValue[] }>(
+      "/fieldValues",
+      { limit: "100", offset: String(offset) }
+    );
+    const items = data.fieldValues ?? [];
+    all.push(...items);
+    if (items.length < 100) break;
+    offset += 100;
+  }
+  return all;
 }
 
 // ─── Email Activities (for contact detail) ───────────────────────────────────

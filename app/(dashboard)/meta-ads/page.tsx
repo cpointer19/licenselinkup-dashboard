@@ -2,21 +2,19 @@ import {
   fetchAllContacts,
   fetchTags,
   fetchFields,
-  fetchContactTags,
-  fetchContactFieldValues,
+  fetchAllContactTags,
+  fetchAllFieldValues,
   type ACField,
 } from "@/lib/activecampaign";
 import { MetaAdsClient, type AdRow } from "./meta-ads-client";
 
 export const dynamic = "force-dynamic";
 
-// Same UTM key set as the contact detail route
 const UTM_KEYS = new Set([
   "utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term",
   "utm_id", "fbclid", "ad_id", "adset_id", "site_source_name", "placement",
 ]);
 
-/** Match a field to a UTM key using perstag first, then title fallback — same logic as contact detail route */
 function getUtmKey(f: ACField): string | null {
   const byPerstag = f.perstag.toLowerCase();
   if (UTM_KEYS.has(byPerstag)) return byPerstag;
@@ -38,15 +36,17 @@ function formatAdName(raw: string): string {
 }
 
 async function getData(): Promise<{ ads: AdRow[] }> {
-  const [contacts, allTags, allFields] = await Promise.all([
+  // Bulk fetch everything in parallel — replaces 700+ per-contact calls
+  const [contacts, allTags, allFields, allContactTags, allFieldValues] = await Promise.all([
     fetchAllContacts(),
     fetchTags(),
     fetchFields(),
+    fetchAllContactTags(),
+    fetchAllFieldValues(),
   ]);
 
   const tagIdToName = new Map(allTags.map((t) => [t.id, t.tag.toLowerCase()]));
 
-  // Build utmKey → field ID map (perstag + title fallback)
   const utmKeyToFieldId = new Map<string, string>();
   for (const f of allFields) {
     const key = getUtmKey(f);
@@ -58,72 +58,61 @@ async function getData(): Promise<{ ads: AdRow[] }> {
   const siteSourceFieldId = utmKeyToFieldId.get("site_source_name");
   const utmSourceFieldId = utmKeyToFieldId.get("utm_source");
 
-  // Need at least one ad name candidate field
   if (!utmContentFieldId && !utmCampaignFieldId) return { ads: [] };
 
-  // Per-contact: fetch tags + field values in parallel
-  const contactData = await Promise.all(
-    contacts.map(async (c) => {
-      const [ctags, fvalues] = await Promise.all([
-        fetchContactTags(c.id).catch(() => []),
-        fetchContactFieldValues(c.id).catch(() => []),
-      ]);
-      const tagNames = ctags
-        .map((ct) => tagIdToName.get(ct.tag) ?? "")
-        .filter(Boolean);
+  // Build lookup maps keyed by contact ID
+  const tagsByContact = new Map<string, string[]>();
+  for (const ct of allContactTags) {
+    const name = tagIdToName.get(ct.tag) ?? "";
+    if (!name) continue;
+    if (!tagsByContact.has(ct.contact)) tagsByContact.set(ct.contact, []);
+    tagsByContact.get(ct.contact)!.push(name);
+  }
 
-      const utmContent = utmContentFieldId
-        ? (fvalues.find((fv) => fv.field === utmContentFieldId)?.value ?? null)
-        : null;
-      const utmCampaign = utmCampaignFieldId
-        ? (fvalues.find((fv) => fv.field === utmCampaignFieldId)?.value ?? null)
-        : null;
-      const siteSourceRaw = siteSourceFieldId
-        ? (fvalues.find((fv) => fv.field === siteSourceFieldId)?.value ?? null)
-        : null;
-      const utmSourceRaw = utmSourceFieldId
-        ? (fvalues.find((fv) => fv.field === utmSourceFieldId)?.value ?? null)
-        : null;
-      // Normalize: prefer site_source_name, fall back to utm_source
-      const rawSource = (siteSourceRaw || utmSourceRaw || "").toLowerCase();
-      const siteSource = rawSource.includes("instagram") || rawSource === "ig"
-        ? "instagram"
-        : rawSource.includes("facebook") || rawSource === "fb"
-        ? "facebook"
-        : (siteSourceRaw || utmSourceRaw || null);
+  const fieldValuesByContact = new Map<string, typeof allFieldValues>();
+  for (const fv of allFieldValues) {
+    if (!fieldValuesByContact.has(fv.contact)) fieldValuesByContact.set(fv.contact, []);
+    fieldValuesByContact.get(fv.contact)!.push(fv);
+  }
 
-      // Use utm_content if it has ">", otherwise utm_campaign, otherwise whichever is non-empty
-      const adKey =
-        (utmContent?.includes(">") ? utmContent : null) ??
-        (utmCampaign?.includes(">") ? utmCampaign : null) ??
-        utmContent ??
-        utmCampaign ??
-        null;
+  // Process each contact using lookup maps (no extra API calls)
+  const adMap = new Map<string, { becameLead: number; profileCreated: number; foundingMember: number; siteSource: string | null }>();
 
-      return { tagNames, adKey, siteSource };
-    })
-  );
+  for (const c of contacts) {
+    const tagNames = tagsByContact.get(c.id) ?? [];
+    const fvalues = fieldValuesByContact.get(c.id) ?? [];
 
-  // Group by ad name
-  const adMap = new Map<
-    string,
-    {
-      becameLead: number;
-      profileCreated: number;
-      foundingMember: number;
-      siteSource: string | null;
-    }
-  >();
+    const utmContent = utmContentFieldId
+      ? (fvalues.find((fv) => fv.field === utmContentFieldId)?.value ?? null)
+      : null;
+    const utmCampaign = utmCampaignFieldId
+      ? (fvalues.find((fv) => fv.field === utmCampaignFieldId)?.value ?? null)
+      : null;
+    const siteSourceRaw = siteSourceFieldId
+      ? (fvalues.find((fv) => fv.field === siteSourceFieldId)?.value ?? null)
+      : null;
+    const utmSourceRaw = utmSourceFieldId
+      ? (fvalues.find((fv) => fv.field === utmSourceFieldId)?.value ?? null)
+      : null;
 
-  for (const { tagNames, adKey, siteSource } of contactData) {
+    const rawSource = (siteSourceRaw || utmSourceRaw || "").toLowerCase();
+    const siteSource = rawSource.includes("instagram") || rawSource === "ig"
+      ? "instagram"
+      : rawSource.includes("facebook") || rawSource === "fb"
+      ? "facebook"
+      : (siteSourceRaw || utmSourceRaw || null);
+
+    const adKey =
+      (utmContent?.includes(">") ? utmContent : null) ??
+      (utmCampaign?.includes(">") ? utmCampaign : null) ??
+      utmContent ??
+      utmCampaign ??
+      null;
+
     if (!adKey) continue;
+
     if (!adMap.has(adKey)) {
-      adMap.set(adKey, {
-        becameLead: 0,
-        profileCreated: 0,
-        foundingMember: 0,
-        siteSource: null,
-      });
+      adMap.set(adKey, { becameLead: 0, profileCreated: 0, foundingMember: 0, siteSource: null });
     }
     const entry = adMap.get(adKey)!;
     if (tagNames.includes("became_lead")) entry.becameLead++;
