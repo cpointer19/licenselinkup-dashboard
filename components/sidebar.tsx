@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   Users,
@@ -26,6 +27,11 @@ const NAV = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
+
+  useEffect(() => { setOptimisticPath(null); }, [pathname]);
+
+  const activePath = optimisticPath ?? pathname;
 
   async function handleLogout() {
     await fetch("/api/auth", { method: "DELETE" });
@@ -51,11 +57,12 @@ export function Sidebar() {
         </p>
         <ul className="space-y-0.5">
           {NAV.map(({ href, label, icon: Icon }) => {
-            const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+            const active = href === "/" ? activePath === "/" : activePath.startsWith(href);
             return (
               <li key={href}>
                 <Link
                   href={href}
+                  onClick={() => setOptimisticPath(href)}
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                     active
