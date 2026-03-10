@@ -1,8 +1,8 @@
 import {
   fetchAllContacts,
   fetchTags,
-  fetchContactTags,
-  fetchContactLists,
+  fetchAllContactTags,
+  fetchAllContactLists,
   fetchLists,
 } from "@/lib/activecampaign";
 import { formatTagName } from "@/lib/utils";
@@ -11,35 +11,42 @@ import { ContactsClient } from "./contacts-client";
 export const dynamic = "force-dynamic";
 
 async function getData() {
-  const [contacts, allTags, allLists] = await Promise.all([fetchAllContacts(), fetchTags(), fetchLists()]);
+  const [contacts, allTags, allLists, allContactTags, allContactLists] = await Promise.all([
+    fetchAllContacts(),
+    fetchTags(),
+    fetchLists(),
+    fetchAllContactTags(),
+    fetchAllContactLists(),
+  ]);
 
-  // Build a tag-id → tag-name map
+  // Build lookup maps
   const tagMap = new Map(allTags.map((t) => [t.id, t.tag]));
 
-  // Build a list-id → list-name map from actual AC data
   const listNames: Record<string, string> = {};
   for (const l of allLists) {
     listNames[l.id] = l.name;
   }
 
-  // Enrich with tags + lists in parallel
-  const enriched = await Promise.all(
-    contacts.map(async (c) => {
-      try {
-        const [ctags, clists] = await Promise.all([
-          fetchContactTags(c.id),
-          fetchContactLists(c.id),
-        ]);
-        return {
-          ...c,
-          tagNames: ctags.map((t) => formatTagName(tagMap.get(t.tag) ?? t.tag)),
-          listIds: clists.filter((l) => l.status === "1").map((l) => l.list),
-        };
-      } catch {
-        return { ...c, tagNames: [], listIds: [] };
-      }
-    })
-  );
+  const tagsByContact = new Map<string, string[]>();
+  for (const ct of allContactTags) {
+    if (!tagsByContact.has(ct.contact)) tagsByContact.set(ct.contact, []);
+    tagsByContact.get(ct.contact)!.push(ct.tag);
+  }
+
+  const listsByContact = new Map<string, string[]>();
+  for (const cl of allContactLists) {
+    if (cl.status !== "1") continue;
+    if (!listsByContact.has(cl.contact)) listsByContact.set(cl.contact, []);
+    listsByContact.get(cl.contact)!.push(cl.list);
+  }
+
+  const enriched = contacts.map((c) => ({
+    ...c,
+    tagNames: (tagsByContact.get(c.id) ?? []).map((tagId) =>
+      formatTagName(tagMap.get(tagId) ?? tagId)
+    ),
+    listIds: listsByContact.get(c.id) ?? [],
+  }));
 
   // Sort: most recently signed up first
   enriched.sort((a, b) => {
