@@ -5,19 +5,21 @@ import {
   fetchAllContactLists,
   fetchLists,
 } from "@/lib/activecampaign";
-import { formatTagName } from "@/lib/utils";
+import { formatTagName, isTestUser } from "@/lib/utils";
 import { ContactsClient } from "./contacts-client";
 
 export const dynamic = "force-dynamic";
 
 async function getData() {
-  const [contacts, allTags, allLists, allContactTags, allContactLists] = await Promise.all([
+  const [allContacts, allTags, allLists, allContactTags, allContactLists] = await Promise.all([
     fetchAllContacts(),
     fetchTags(),
     fetchLists(),
     fetchAllContactTags(),
     fetchAllContactLists(),
   ]);
+
+  const contacts = allContacts.filter((c) => !isTestUser(c.email));
 
   // Build lookup maps
   const tagMap = new Map(allTags.map((t) => [t.id, t.tag]));

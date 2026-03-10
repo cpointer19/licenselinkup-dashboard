@@ -62,18 +62,6 @@ function topTags(tags: ACTag[], n = 10) {
 
 // ─── Contact Classification ──────────────────────────────────────────────────
 
-const TEST_USER_EMAILS = new Set([
-  "pointercu@gmail.com",
-  "pointercu+2@gmail.com",
-  "pointercu+83@gmail.com",
-  "testing1@gmail.com",
-]);
-
-function isTestUser(email: string): boolean {
-  const lower = email.toLowerCase();
-  return lower.endsWith("@agilno.com") || TEST_USER_EMAILS.has(lower);
-}
-
 const REAL_LEAD_EMAILS = new Set([
   "germanyjohnson@kw.com",
   "mikeusa03@aol.com",
@@ -235,8 +223,8 @@ function ConversionPipeline({ stages, totalContacts, rejectedCount }: { stages: 
                 <div className="grid grid-cols-3 gap-3">
                   {PIPELINE_META.map((meta) => {
                     const contacts = [...(pipelineContacts?.[meta.stage] ?? [])].sort((a, b) => {
-                      const aReal = isRealLead(a.email) ? 0 : isTestUser(a.email) ? 2 : 1;
-                      const bReal = isRealLead(b.email) ? 0 : isTestUser(b.email) ? 2 : 1;
+                      const aReal = isRealLead(a.email) ? 0 : 1;
+                      const bReal = isRealLead(b.email) ? 0 : 1;
                       return aReal - bReal;
                     });
                     const Icon = meta.icon;
@@ -253,32 +241,26 @@ function ConversionPipeline({ stages, totalContacts, rejectedCount }: { stages: 
                           )}
                           {contacts.map((c) => {
                             const name = [c.firstName, c.lastName].filter(Boolean).join(" ") || c.email;
-                            const test = isTestUser(c.email);
                             const realLead = isRealLead(c.email);
                             return (
                               <button
                                 key={c.id}
                                 onClick={() => setSelectedContactId(c.id)}
                                 className={`w-full flex items-center gap-2.5 rounded-lg border p-2.5 transition-all text-left group ${
-                                  test
-                                    ? "bg-amber-50/80 border-amber-200 hover:border-amber-300 hover:shadow-sm"
-                                    : realLead
+                                  realLead
                                     ? "bg-emerald-50/80 border-emerald-200 hover:border-emerald-300 hover:shadow-sm"
                                     : "bg-white/80 border-white hover:border-slate-200 hover:shadow-sm"
                                 }`}
                               >
                                 <div
                                   className="flex h-8 w-8 items-center justify-center rounded-full text-white text-xs font-bold flex-shrink-0"
-                                  style={{ backgroundColor: test ? "#f59e0b" : realLead ? "#10b981" : meta.color }}
+                                  style={{ backgroundColor: realLead ? "#10b981" : meta.color }}
                                 >
                                   {name.charAt(0).toUpperCase()}
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center gap-1.5">
                                     <p className="text-sm font-medium text-slate-800 truncate group-hover:text-slate-900">{name}</p>
-                                    {test && (
-                                      <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[9px] px-1.5 py-0 flex-shrink-0">Test User</Badge>
-                                    )}
                                     {realLead && (
                                       <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[9px] px-1.5 py-0 flex-shrink-0">Founding Applicant Peer</Badge>
                                     )}

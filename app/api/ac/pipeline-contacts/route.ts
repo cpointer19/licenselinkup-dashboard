@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchAllContacts, fetchTags, fetchAllContactTags } from "@/lib/activecampaign";
+import { isTestUser } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -15,11 +16,12 @@ const KNOWN_LEADS = new Set([
 export async function GET() {
   try {
     // Bulk fetch — replaces per-contact tag calls
-    const [contacts, tags, allContactTags] = await Promise.all([
+    const [allContacts, tags, allContactTags] = await Promise.all([
       fetchAllContacts(),
       fetchTags(),
       fetchAllContactTags(),
     ]);
+    const contacts = allContacts.filter((c) => !isTestUser(c.email));
 
     const tagIdToName = new Map(tags.map((t) => [t.id, t.tag.toLowerCase()]));
 

@@ -5,10 +5,12 @@ import {
   fetchContactLists,
   fetchContactAutomationsByContact,
 } from "@/lib/activecampaign";
+import { isTestUser } from "@/lib/utils";
 
 export async function GET() {
   try {
-    const contacts = await fetchAllContacts();
+    const allContacts = await fetchAllContacts();
+    const contacts = allContacts.filter((c) => !isTestUser(c.email));
 
     // Enrich each contact with tags + lists + automations (parallel)
     const enriched = await Promise.all(

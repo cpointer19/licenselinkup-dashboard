@@ -8,17 +8,19 @@ import {
   fetchLists,
   fetchTags,
 } from "@/lib/activecampaign";
+import { isTestUser } from "@/lib/utils";
 import { OverviewClient } from "./overview-client";
 import { Skeleton } from "@/components/ui/skeleton";
 
 async function getOverviewData() {
-  const [contacts, automations, campaigns, lists, tags] = await Promise.all([
+  const [allContacts, automations, campaigns, lists, tags] = await Promise.all([
     fetchAllContacts(),
     fetchAutomations(),
     fetchCampaigns(),
     fetchLists(),
     fetchTags(),
   ]);
+  const contacts = allContacts.filter((c) => !isTestUser(c.email));
   return { contacts, automations, campaigns, lists, tags };
 }
 
