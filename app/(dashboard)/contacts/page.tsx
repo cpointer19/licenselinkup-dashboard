@@ -42,9 +42,9 @@ async function getData() {
 
   const enriched = contacts.map((c) => ({
     ...c,
-    tagNames: (tagsByContact.get(c.id) ?? []).map((tagId) =>
-      formatTagName(tagMap.get(tagId) ?? tagId)
-    ),
+    tagNames: (tagsByContact.get(c.id) ?? [])
+      .map((tagId) => formatTagName(tagMap.get(tagId) ?? tagId))
+      .sort((a, b) => a.localeCompare(b)),
     listIds: listsByContact.get(c.id) ?? [],
   }));
 
