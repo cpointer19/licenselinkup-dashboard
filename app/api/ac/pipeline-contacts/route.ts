@@ -57,10 +57,11 @@ export async function GET() {
       }
     }
 
-    // Ensure known real leads appear in became_lead
+    // Ensure known real leads appear in became_lead (unless they have peer_review_invited)
     const leadEmails = new Set(stages["became_lead"].map((c) => c.email.toLowerCase()));
     for (const contact of contacts) {
-      if (KNOWN_LEADS.has(contact.email.toLowerCase()) && !leadEmails.has(contact.email.toLowerCase())) {
+      const tagNames = tagsByContact.get(contact.id) ?? [];
+      if (KNOWN_LEADS.has(contact.email.toLowerCase()) && !leadEmails.has(contact.email.toLowerCase()) && !tagNames.includes(PEER_REVIEW_INVITED_TAG)) {
         stages["became_lead"].push({
           id: contact.id,
           email: contact.email,
