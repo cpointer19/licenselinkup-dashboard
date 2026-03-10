@@ -24,15 +24,12 @@ function getUtmKey(f: ACField): string | null {
 }
 
 function formatAdName(raw: string): string {
+  // Preserve Meta's > separator convention, just use › for display
   return raw
-    .replace(/>/g, " ")
-    .replace(/-/g, " ")
-    .split(" ")
+    .split(">")
+    .map((s) => s.trim())
     .filter(Boolean)
-    .filter((w) => !/^\d{8}$/.test(w))
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-    .join(" ")
-    .trim();
+    .join(" › ");
 }
 
 async function getData(): Promise<{ ads: AdRow[] }> {
@@ -57,6 +54,7 @@ async function getData(): Promise<{ ads: AdRow[] }> {
   const utmCampaignFieldId = utmKeyToFieldId.get("utm_campaign");
   const siteSourceFieldId = utmKeyToFieldId.get("site_source_name");
   const utmSourceFieldId = utmKeyToFieldId.get("utm_source");
+  const utmTermFieldId = utmKeyToFieldId.get("utm_term");
 
   if (!utmContentFieldId && !utmCampaignFieldId) return { ads: [] };
 
@@ -76,7 +74,7 @@ async function getData(): Promise<{ ads: AdRow[] }> {
   }
 
   // Process each contact using lookup maps (no extra API calls)
-  const adMap = new Map<string, { becameLead: number; profileCreated: number; foundingMember: number; siteSource: string | null }>();
+  const adMap = new Map<string, { rawAdName: string; rawAdset: string; becameLead: number; profileCreated: number; foundingMember: number; siteSource: string | null }>();
 
   for (const c of contacts) {
     const tagNames = tagsByContact.get(c.id) ?? [];
@@ -87,6 +85,9 @@ async function getData(): Promise<{ ads: AdRow[] }> {
       : null;
     const utmCampaign = utmCampaignFieldId
       ? (fvalues.find((fv) => fv.field === utmCampaignFieldId)?.value ?? null)
+      : null;
+    const utmTerm = utmTermFieldId
+      ? (fvalues.find((fv) => fv.field === utmTermFieldId)?.value ?? null)
       : null;
     const siteSourceRaw = siteSourceFieldId
       ? (fvalues.find((fv) => fv.field === siteSourceFieldId)?.value ?? null)
@@ -102,17 +103,21 @@ async function getData(): Promise<{ ads: AdRow[] }> {
       ? "facebook"
       : (siteSourceRaw || utmSourceRaw || null);
 
-    const adKey =
+    const rawAdName =
       (utmContent?.includes(">") ? utmContent : null) ??
       (utmCampaign?.includes(">") ? utmCampaign : null) ??
       utmContent ??
       utmCampaign ??
       null;
 
-    if (!adKey) continue;
+    if (!rawAdName) continue;
+
+    // Group by ad + adset so same creative in different ad sets shows as separate rows
+    const rawAdset = utmTerm ?? "";
+    const adKey = `${rawAdName}||${rawAdset}`;
 
     if (!adMap.has(adKey)) {
-      adMap.set(adKey, { becameLead: 0, profileCreated: 0, foundingMember: 0, siteSource: null });
+      adMap.set(adKey, { rawAdName, rawAdset, becameLead: 0, profileCreated: 0, foundingMember: 0, siteSource: null });
     }
     const entry = adMap.get(adKey)!;
     if (tagNames.includes("became_lead")) entry.becameLead++;
@@ -121,14 +126,16 @@ async function getData(): Promise<{ ads: AdRow[] }> {
     if (!entry.siteSource && siteSource) entry.siteSource = siteSource;
   }
 
-  const ads: AdRow[] = Array.from(adMap.entries())
-    .map(([raw, counts]) => ({
-      rawAdName: raw,
-      adName: formatAdName(raw),
-      becameLead: counts.becameLead,
-      profileCreated: counts.profileCreated,
-      foundingMember: counts.foundingMember,
-      siteSource: counts.siteSource,
+  const ads: AdRow[] = Array.from(adMap.values())
+    .map((entry) => ({
+      rawAdName: entry.rawAdName,
+      adName: formatAdName(entry.rawAdName),
+      rawAdset: entry.rawAdset,
+      adsetName: entry.rawAdset ? formatAdName(entry.rawAdset) : null,
+      becameLead: entry.becameLead,
+      profileCreated: entry.profileCreated,
+      foundingMember: entry.foundingMember,
+      siteSource: entry.siteSource,
     }))
     .filter((a) => a.becameLead > 0)
     .sort((a, b) => b.becameLead - a.becameLead);

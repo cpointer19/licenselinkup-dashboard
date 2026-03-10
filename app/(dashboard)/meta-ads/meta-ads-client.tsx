@@ -22,6 +22,8 @@ import { UserCheck, ClipboardCheck, Award } from "lucide-react";
 export interface AdRow {
   rawAdName: string;
   adName: string;
+  rawAdset: string;
+  adsetName: string | null;
   becameLead: number;
   profileCreated: number;
   foundingMember: number;
@@ -115,8 +117,8 @@ export function MetaAdsClient({ ads }: Props) {
 
   // Chart data — full ad names in tooltip, truncated on axis
   const chartData = filtered.map((a) => ({
-    name: truncateAdName(stripDate(a.adName)),
-    fullName: stripDate(a.adName),
+    name: truncateAdName(a.rawAdName) + (a.rawAdset ? `\n${truncateAdName(a.rawAdset, 36)}` : ""),
+    fullName: a.rawAdName + (a.rawAdset ? ` | ${a.rawAdset}` : ""),
     "Became Lead": a.becameLead,
     "Profile Created": a.profileCreated,
     "Founding Member": a.foundingMember,
@@ -270,8 +272,10 @@ export function MetaAdsClient({ ads }: Props) {
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] text-slate-400 w-4 flex-shrink-0">#{i + 1}</span>
                         <div>
-                          <p className="font-medium text-slate-800 leading-snug">{stripDate(ad.adName)}</p>
-                          <p className="text-[10px] text-slate-400 font-mono mt-0.5">{ad.rawAdName}</p>
+                          <p className="font-medium text-slate-800 leading-snug font-mono text-xs">{ad.rawAdName}</p>
+                          {ad.adsetName && (
+                            <p className="text-[10px] text-slate-400 mt-0.5 font-mono">{ad.rawAdset}</p>
+                          )}
                         </div>
                       </div>
                     </td>
