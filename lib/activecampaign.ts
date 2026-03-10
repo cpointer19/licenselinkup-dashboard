@@ -217,6 +217,23 @@ export async function fetchContactLists(contactId: string): Promise<ACContactLis
   return data.contactLists ?? [];
 }
 
+/** Fetch ALL contact-list memberships in bulk */
+export async function fetchAllContactLists(): Promise<ACContactList[]> {
+  const all: ACContactList[] = [];
+  let offset = 0;
+  while (true) {
+    const data = await acFetch<{ contactLists: ACContactList[] }>(
+      "/contactLists",
+      { limit: "100", offset: String(offset) }
+    );
+    const items = data.contactLists ?? [];
+    all.push(...items);
+    if (items.length < 100) break;
+    offset += 100;
+  }
+  return all;
+}
+
 // ─── Tags ────────────────────────────────────────────────────────────────────
 
 export interface ACTag {
