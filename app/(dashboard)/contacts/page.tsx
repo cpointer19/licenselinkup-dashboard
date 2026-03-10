@@ -3,6 +3,7 @@ import {
   fetchTags,
   fetchContactTags,
   fetchContactLists,
+  fetchLists,
 } from "@/lib/activecampaign";
 import { formatTagName } from "@/lib/utils";
 import { ContactsClient } from "./contacts-client";
@@ -10,10 +11,16 @@ import { ContactsClient } from "./contacts-client";
 export const dynamic = "force-dynamic";
 
 async function getData() {
-  const [contacts, allTags] = await Promise.all([fetchAllContacts(), fetchTags()]);
+  const [contacts, allTags, allLists] = await Promise.all([fetchAllContacts(), fetchTags(), fetchLists()]);
 
   // Build a tag-id → tag-name map
   const tagMap = new Map(allTags.map((t) => [t.id, t.tag]));
+
+  // Build a list-id → list-name map from actual AC data
+  const listNames: Record<string, string> = {};
+  for (const l of allLists) {
+    listNames[l.id] = l.name;
+  }
 
   // Enrich with tags + lists in parallel
   const enriched = await Promise.all(
@@ -41,10 +48,10 @@ async function getData() {
     return tb - ta;
   });
 
-  return { contacts: enriched };
+  return { contacts: enriched, listNames };
 }
 
 export default async function ContactsPage() {
-  const { contacts } = await getData();
-  return <ContactsClient contacts={contacts} />;
+  const { contacts, listNames } = await getData();
+  return <ContactsClient contacts={contacts} listNames={listNames} />;
 }
