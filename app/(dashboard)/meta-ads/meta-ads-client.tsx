@@ -260,7 +260,7 @@ export function MetaAdsClient({ ads }: Props) {
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Source</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-[#5375FF] uppercase tracking-wide">Leads</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-violet-600 uppercase tracking-wide">Profiles Created</th>
-                  <th className="text-right pl-4 pr-8 py-3 text-xs font-semibold text-emerald-600 uppercase tracking-wide">Founding</th>
+                  <th className="text-right pl-4 pr-8 py-3 text-xs font-semibold text-emerald-600 uppercase tracking-wide">Founding Members</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
