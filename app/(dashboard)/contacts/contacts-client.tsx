@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, User } from "lucide-react";
+import { Search } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { CsvExportButton } from "@/components/csv-export-button";
 import { Input } from "@/components/ui/input";
@@ -28,20 +28,10 @@ interface Contact {
 
 interface Props {
   contacts: Contact[];
+  listNames: Record<string, string>;
 }
 
-const LIST_NAMES: Record<string, string> = {
-  // will resolve dynamically — fallback to ID
-};
-
-function listBadge(listId: string) {
-  const names: Record<string, string> = {
-    "1": "Master", "2": "Peer", "3": "Lance's",
-  };
-  return names[listId] ?? `List ${listId}`;
-}
-
-export function ContactsClient({ contacts }: Props) {
+export function ContactsClient({ contacts, listNames }: Props) {
   const [search, setSearch]           = useState("");
   const [selectedId, setSelectedId]   = useState<string | null>(null);
 
@@ -90,30 +80,18 @@ export function ContactsClient({ contacts }: Props) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Tags</TableHead>
-              <TableHead>Lists</TableHead>
               <TableHead>Joined</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((c) => {
-              const name = [c.firstName, c.lastName].filter(Boolean).join(" ") || "—";
-              return (
+            {filtered.map((c) => (
                 <TableRow
                   key={c.id}
                   className="cursor-pointer"
                   onClick={() => setSelectedId(c.id)}
                 >
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#5375FF]/10">
-                        <User className="h-3.5 w-3.5 text-[#5375FF]" />
-                      </div>
-                      <span className="font-medium text-slate-800">{name}</span>
-                    </div>
-                  </TableCell>
                   <TableCell className="text-slate-600">{c.email}</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
@@ -129,22 +107,12 @@ export function ContactsClient({ contacts }: Props) {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {c.listIds.map((lid) => (
-                        <Badge key={lid} variant="info" className="text-[10px]">
-                          {listBadge(lid)}
-                        </Badge>
-                      ))}
-                    </div>
-                  </TableCell>
                   <TableCell className="text-slate-500 text-xs whitespace-nowrap">{formatDateTime(c.cdate)}</TableCell>
                 </TableRow>
-              );
-            })}
+            ))}
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-slate-400 py-10">
+                <TableCell colSpan={3} className="text-center text-slate-400 py-10">
                   No contacts match your search.
                 </TableCell>
               </TableRow>

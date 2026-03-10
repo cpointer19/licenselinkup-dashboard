@@ -5,7 +5,8 @@ import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
-import { Users, Zap, Mail, Tag, TrendingUp, List, ArrowRight, UserCheck, ClipboardCheck, Award, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { Users, Zap, Mail, Tag, TrendingUp, List, ArrowRight, UserCheck, ClipboardCheck, Award, ChevronDown, ChevronUp, Loader2, BarChart2 } from "lucide-react";
+import Link from "next/link";
 import type { ACContact, ACAutomation, ACCampaign, ACList, ACTag } from "@/lib/activecampaign";
 import { StatsCard } from "@/components/stats-card";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -99,7 +100,7 @@ interface PipelineContact {
   cdate?: string;
 }
 
-function ConversionPipeline({ stages, totalContacts }: { stages: { stage: string; count: number }[]; totalContacts: number }) {
+function ConversionPipeline({ stages, totalContacts, rejectedCount }: { stages: { stage: string; count: number }[]; totalContacts: number; rejectedCount: number }) {
   const maxCount = Math.max(...stages.map((s) => s.count), 1);
   const firstCount = stages[0]?.count ?? 0;
   const lastCount = stages[stages.length - 1]?.count ?? 0;
@@ -148,6 +149,12 @@ function ConversionPipeline({ stages, totalContacts }: { stages: { stage: string
               <CardDescription>Landing page signup &rarr; Profile &rarr; Founding member</CardDescription>
             </div>
             <div className="flex items-center gap-4">
+              {rejectedCount > 0 && (
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-red-500">{rejectedCount}</p>
+                  <p className="text-xs text-slate-500">Rejected</p>
+                </div>
+              )}
               <div className="text-right">
                 <p className="text-2xl font-bold text-slate-900">{overallRate}%</p>
                 <p className="text-xs text-slate-500">Full conversion rate</p>
@@ -338,6 +345,11 @@ export function OverviewClient({ contacts, automations, campaigns, lists, tags }
     });
   }, [tags]);
 
+  const rejectedCount = useMemo(() => {
+    const tag = tags.find((t) => t.tag.toLowerCase() === "founding_member_rejected");
+    return Number(tag?.subscriber_count ?? 0);
+  }, [tags]);
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -352,8 +364,25 @@ export function OverviewClient({ contacts, automations, campaigns, lists, tags }
         />
       </PageHeader>
 
+      {/* Meta Ad Performance CTA */}
+      <Link
+        href="/meta-ads"
+        className="flex items-center justify-between rounded-xl border border-[#5375FF]/20 bg-[#5375FF]/5 px-5 py-4 transition-colors hover:bg-[#5375FF]/10 group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#5375FF]/10">
+            <BarChart2 className="h-4.5 w-4.5 text-[#5375FF]" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-slate-800">Meta Ad Performance</p>
+            <p className="text-xs text-slate-500">See which ads are driving the most leads, profile creations &amp; founding members</p>
+          </div>
+        </div>
+        <ArrowRight className="h-4 w-4 text-[#5375FF] flex-shrink-0 transition-transform group-hover:translate-x-0.5" />
+      </Link>
+
       {/* Conversion Pipeline */}
-      <ConversionPipeline stages={pipelineStages} totalContacts={contacts.length} />
+      <ConversionPipeline stages={pipelineStages} totalContacts={contacts.length} rejectedCount={rejectedCount} />
 
       {/* Claude Bot — weekly intelligence */}
       <ClaudeBot />

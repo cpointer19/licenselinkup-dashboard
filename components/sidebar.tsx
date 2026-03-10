@@ -11,14 +11,16 @@ import {
   Mail,
   ChevronRight,
   LogOut,
+  BarChart2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { href: "/",              label: "Overview",      icon: LayoutDashboard },
-  { href: "/contacts",      label: "Contacts",      icon: Users },
-  { href: "/automations",   label: "Automations",   icon: Zap },
-  { href: "/campaigns",     label: "Campaigns",     icon: Mail },
+  { href: "/",              label: "Overview",            icon: LayoutDashboard },
+  { href: "/meta-ads",      label: "Meta Ad Performance", icon: BarChart2 },
+  { href: "/contacts",      label: "Contacts",            icon: Users },
+  { href: "/automations",   label: "Automations",         icon: Zap },
+  { href: "/campaigns",     label: "Campaigns",           icon: Mail },
 ];
 
 export function Sidebar() {

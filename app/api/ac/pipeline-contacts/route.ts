@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { fetchAllContacts, fetchTags, fetchContactTags } from "@/lib/activecampaign";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 const PIPELINE_STAGES = ["became_lead", "profile_created", "onboarding_complete"];
+const REJECTED_TAG = "founding_member_rejected";
 
 // Known real leads that should always appear in the became_lead stage
 const KNOWN_LEADS = new Set([
@@ -53,6 +54,9 @@ export async function GET() {
     }
 
     for (const { contact, tagNames } of contactTagResults) {
+      // Skip contacts who have been rejected
+      if (tagNames.includes(REJECTED_TAG)) continue;
+
       // Find the highest stage this contact is in
       for (const stage of PIPELINE_STAGES) {
         if (tagNames.includes(stage)) {
