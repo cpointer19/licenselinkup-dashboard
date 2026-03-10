@@ -62,6 +62,11 @@ function SiteSourceBadge({ source }: { source: string | null }) {
   );
 }
 
+// Strip trailing 8-digit dates (e.g. 03072026) — client-side safety net
+function stripDate(name: string): string {
+  return name.replace(/\s*\b\d{8}\b\s*$/, "").trim();
+}
+
 function truncateAdName(name: string, n = 48): string {
   return name.length > n ? name.slice(0, n - 1) + "…" : name;
 }
@@ -110,8 +115,8 @@ export function MetaAdsClient({ ads }: Props) {
 
   // Chart data — full ad names in tooltip, truncated on axis
   const chartData = filtered.map((a) => ({
-    name: truncateAdName(a.adName),
-    fullName: a.adName,
+    name: truncateAdName(stripDate(a.adName)),
+    fullName: stripDate(a.adName),
     "Became Lead": a.becameLead,
     "Profile Created": a.profileCreated,
     "Founding Member": a.foundingMember,
@@ -265,7 +270,7 @@ export function MetaAdsClient({ ads }: Props) {
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] text-slate-400 w-4 flex-shrink-0">#{i + 1}</span>
                         <div>
-                          <p className="font-medium text-slate-800 leading-snug">{ad.adName}</p>
+                          <p className="font-medium text-slate-800 leading-snug">{stripDate(ad.adName)}</p>
                           <p className="text-[10px] text-slate-400 font-mono mt-0.5">{ad.rawAdName}</p>
                         </div>
                       </div>
