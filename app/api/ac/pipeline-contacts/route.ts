@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 
 const PIPELINE_STAGES = ["became_lead", "profile_created", "onboarding_complete"];
 const REJECTED_TAG = "founding_member_rejected";
+const PEER_REVIEW_INVITED_TAG = "peer_review_invited";
 
 const KNOWN_LEADS = new Set([
   "germanyjohnson@kw.com",
@@ -43,6 +44,7 @@ export async function GET() {
       if (tagNames.includes(REJECTED_TAG)) continue;
 
       for (const stage of PIPELINE_STAGES) {
+        if (stage === "became_lead" && tagNames.includes(PEER_REVIEW_INVITED_TAG)) continue;
         if (tagNames.includes(stage)) {
           stages[stage].push({
             id: contact.id,
