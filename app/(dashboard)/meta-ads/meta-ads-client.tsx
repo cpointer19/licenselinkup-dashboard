@@ -237,14 +237,20 @@ export function MetaAdsClient({ ads }: Props) {
                 />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: "#f8fafc" }} />
                 <Legend
-                  payload={[
-                    { value: "Became Lead",     type: "circle", color: STAGE_COLORS.becameLead },
-                    { value: "Profile Created", type: "circle", color: STAGE_COLORS.profileCreated },
-                    { value: "Founding Member", type: "circle", color: STAGE_COLORS.foundingMember },
-                  ]}
-                  iconType="circle"
-                  iconSize={8}
-                  formatter={(v) => <span style={{ fontSize: 12, color: "#475569" }}>{v}</span>}
+                  content={() => (
+                    <div className="flex items-center justify-center gap-5 pt-1" style={{ fontSize: 12, color: "#475569" }}>
+                      {[
+                        { label: "Became Lead",     color: STAGE_COLORS.becameLead },
+                        { label: "Profile Created", color: STAGE_COLORS.profileCreated },
+                        { label: "Founding Member", color: STAGE_COLORS.foundingMember },
+                      ].map(({ label, color }) => (
+                        <span key={label} className="flex items-center gap-1.5">
+                          <span className="inline-block h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                          {label}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 />
                 <Bar dataKey="Became Lead" fill={STAGE_COLORS.becameLead} radius={[0, 4, 4, 0]} />
                 <Bar dataKey="Profile Created" fill={STAGE_COLORS.profileCreated} radius={[0, 4, 4, 0]} />
