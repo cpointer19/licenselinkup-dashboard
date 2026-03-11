@@ -6,6 +6,7 @@ import {
   fetchAllFieldValues,
   type ACField,
 } from "@/lib/activecampaign";
+import { fetchMetaAdSpend } from "@/lib/meta";
 import { MetaAdsClient, type AdRow } from "./meta-ads-client";
 
 export const dynamic = "force-dynamic";
@@ -32,14 +33,15 @@ function formatAdName(raw: string): string {
     .join(" › ");
 }
 
-async function getData(): Promise<{ ads: AdRow[] }> {
+async function getData(): Promise<{ ads: AdRow[]; totalSpend: number | null; totalLeadsAllTime: number; totalProfilesAllTime: number }> {
   // Bulk fetch everything in parallel — replaces 700+ per-contact calls
-  const [contacts, allTags, allFields, allContactTags, allFieldValues] = await Promise.all([
+  const [contacts, allTags, allFields, allContactTags, allFieldValues, totalSpend] = await Promise.all([
     fetchAllContacts(),
     fetchTags(),
     fetchFields(),
     fetchAllContactTags(),
     fetchAllFieldValues(),
+    fetchMetaAdSpend(),
   ]);
 
   const tagIdToName = new Map(allTags.map((t) => [t.id, t.tag.toLowerCase()]));
@@ -56,7 +58,15 @@ async function getData(): Promise<{ ads: AdRow[] }> {
   const utmSourceFieldId = utmKeyToFieldId.get("utm_source");
   const utmTermFieldId = utmKeyToFieldId.get("utm_term");
 
-  if (!utmContentFieldId && !utmCampaignFieldId) return { ads: [] };
+  // Use subscriber_count from AC tags API — same source as the Overview page
+  const totalLeadsAllTime = Number(
+    allTags.find((t) => t.tag.toLowerCase() === "became_lead")?.subscriber_count ?? 0
+  );
+  const totalProfilesAllTime = Number(
+    allTags.find((t) => t.tag.toLowerCase() === "profile_created")?.subscriber_count ?? 0
+  );
+
+  if (!utmContentFieldId && !utmCampaignFieldId) return { ads: [], totalSpend, totalLeadsAllTime, totalProfilesAllTime };
 
   // Build lookup maps keyed by contact ID
   const tagsByContact = new Map<string, string[]>();
@@ -142,10 +152,10 @@ async function getData(): Promise<{ ads: AdRow[] }> {
     .filter((a) => !a.rawAdName.toLowerCase().startsWith("utm_"))
     .sort((a, b) => b.becameLead - a.becameLead);
 
-  return { ads };
+  return { ads, totalSpend, totalLeadsAllTime, totalProfilesAllTime };
 }
 
 export default async function MetaAdsPage() {
-  const { ads } = await getData();
-  return <MetaAdsClient ads={ads} />;
+  const { ads, totalSpend, totalLeadsAllTime, totalProfilesAllTime } = await getData();
+  return <MetaAdsClient ads={ads} totalSpend={totalSpend} totalLeadsAllTime={totalLeadsAllTime} totalProfilesAllTime={totalProfilesAllTime} />;
 }

@@ -12,7 +12,7 @@ import {
   Legend,
   Cell,
 } from "recharts";
-import { BarChart2, Instagram, Facebook, Monitor, X, ImageIcon } from "lucide-react";
+import { BarChart2, Instagram, Facebook, Monitor, X, ImageIcon, DollarSign, TrendingDown } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,9 @@ export interface AdRow {
 
 interface Props {
   ads: AdRow[];
+  totalSpend: number | null;
+  totalLeadsAllTime: number;
+  totalProfilesAllTime: number;
 }
 
 const STAGE_COLORS = {
@@ -172,7 +175,7 @@ function ImageModal({ src, onClose }: { src: string; onClose: () => void }) {
   );
 }
 
-export function MetaAdsClient({ ads }: Props) {
+export function MetaAdsClient({ ads, totalSpend, totalLeadsAllTime, totalProfilesAllTime }: Props) {
   const [filter, setFilter] = useState<"all" | "instagram" | "facebook">("all");
   const [modalSrc, setModalSrc] = useState<string | null>(null);
 
@@ -223,27 +226,19 @@ export function MetaAdsClient({ ads }: Props) {
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         <StatsCard
-          title="Ads Tracked"
-          value={ads.length}
-          subtitle={`${instagramAds} Instagram · ${facebookAds} Facebook`}
-          icon={BarChart2}
-          iconColor="text-[#5375FF]"
-          iconBg="bg-[#5375FF]/10"
-        />
-        <StatsCard
-          title="Attributed Leads"
-          value={totalLeads}
-          subtitle="Became Lead via ad"
+          title="Total Leads"
+          value={totalLeadsAllTime}
+          subtitle={`* ${totalLeadsAllTime - totalLeads} leads came before UTM tracking was set up`}
           icon={UserCheck}
           iconColor="text-[#5375FF]"
           iconBg="bg-[#5375FF]/10"
         />
         <StatsCard
           title="Profiles Created"
-          value={totalProfiles}
-          subtitle="Via attributed ad"
+          value={totalProfilesAllTime}
+          subtitle={`* ${totalProfilesAllTime - totalProfiles} came before UTM tracking was set up`}
           icon={ClipboardCheck}
           iconColor="text-violet-600"
           iconBg="bg-violet-50"
@@ -255,6 +250,30 @@ export function MetaAdsClient({ ads }: Props) {
           icon={Award}
           iconColor="text-emerald-600"
           iconBg="bg-emerald-50"
+        />
+      </div>
+
+      {/* Meta spend stats */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-2">
+        <StatsCard
+          title="Total Ad Spend"
+          value={totalSpend != null ? `$${totalSpend.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+          subtitle="Meta spend since Mar 8, 2026"
+          icon={DollarSign}
+          iconColor="text-orange-600"
+          iconBg="bg-orange-50"
+        />
+        <StatsCard
+          title="Cost Per Lead"
+          value={
+            totalSpend != null && totalLeadsAllTime > 0
+              ? `$${(totalSpend / totalLeadsAllTime).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+              : "—"
+          }
+          subtitle="Total spend ÷ attributed leads"
+          icon={TrendingDown}
+          iconColor="text-rose-600"
+          iconBg="bg-rose-50"
         />
       </div>
 
