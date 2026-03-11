@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -12,7 +12,7 @@ import {
   Legend,
   Cell,
 } from "recharts";
-import { BarChart2, Instagram, Facebook, Monitor } from "lucide-react";
+import { BarChart2, Instagram, Facebook, Monitor, X, ImageIcon } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +40,20 @@ const STAGE_COLORS = {
   foundingMember: "#10b981",
 };
 
+// Map rawAdName substrings (lowercase) → image path in /public/ads/
+// Add new entries here as creatives are uploaded.
+const AD_IMAGES: Record<string, string> = {
+  "state-line-map": "/ads/state-line-map.png",
+};
+
+function getAdImage(rawAdName: string): string | null {
+  const lower = rawAdName.toLowerCase();
+  for (const [key, path] of Object.entries(AD_IMAGES)) {
+    if (lower.includes(key)) return path;
+  }
+  return null;
+}
+
 function SiteSourceBadge({ source }: { source: string | null }) {
   if (!source) return null;
   const lower = source.toLowerCase();
@@ -64,11 +78,6 @@ function SiteSourceBadge({ source }: { source: string | null }) {
   );
 }
 
-// Strip trailing 8-digit dates (e.g. 03072026) — client-side safety net
-function stripDate(name: string): string {
-  return name.replace(/\s*\b\d{8}\b\s*$/, "").trim();
-}
-
 function truncateAdName(name: string, n = 48): string {
   return name.length > n ? name.slice(0, n - 1) + "…" : name;
 }
@@ -90,8 +99,73 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
+// Ad image thumbnail — click to open modal
+function AdThumbnail({
+  rawAdName,
+  onOpen,
+}: {
+  rawAdName: string;
+  onOpen: (src: string) => void;
+}) {
+  const src = getAdImage(rawAdName);
+
+  if (!src) {
+    return (
+      <div className="h-12 w-10 flex-shrink-0 rounded border border-dashed border-slate-200 bg-slate-50 flex items-center justify-center">
+        <ImageIcon className="h-3.5 w-3.5 text-slate-300" />
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => onOpen(src)}
+      className="h-12 w-10 flex-shrink-0 rounded overflow-hidden border border-slate-200 hover:border-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-[#5375FF] focus:ring-offset-1"
+      title="Click to preview"
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt="Ad creative" className="h-full w-full object-cover" />
+    </button>
+  );
+}
+
+// Full-screen modal overlay
+function ImageModal({ src, onClose }: { src: string; onClose: () => void }) {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="relative max-h-[90vh] max-w-lg w-full mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute -top-3 -right-3 z-10 rounded-full bg-white shadow-md p-1.5 text-slate-600 hover:text-slate-900 transition-colors"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={src}
+          alt="Ad creative"
+          className="w-full h-auto rounded-xl shadow-2xl max-h-[90vh] object-contain"
+        />
+      </div>
+    </div>
+  );
+}
+
 export function MetaAdsClient({ ads }: Props) {
   const [filter, setFilter] = useState<"all" | "instagram" | "facebook">("all");
+  const [modalSrc, setModalSrc] = useState<string | null>(null);
 
   // Exclude test ads and rows with raw UTM field names (bad tracking data)
   const visibleAds = useMemo(
@@ -132,6 +206,8 @@ export function MetaAdsClient({ ads }: Props) {
 
   return (
     <div className="space-y-6">
+      {modalSrc && <ImageModal src={modalSrc} onClose={() => setModalSrc(null)} />}
+
       <PageHeader
         title="Meta Ad Performance"
         description="Which ads are driving leads through the conversion pipeline"
@@ -272,7 +348,8 @@ export function MetaAdsClient({ ads }: Props) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-100">
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Ad</th>
+                  <th className="w-14 px-4 py-3" />
+                  <th className="text-left px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Ad</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Source</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-[#5375FF] uppercase tracking-wide">Leads</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-violet-600 uppercase tracking-wide">Profiles Created</th>
@@ -282,7 +359,12 @@ export function MetaAdsClient({ ads }: Props) {
               <tbody className="divide-y divide-slate-50">
                 {filtered.map((ad, i) => (
                   <tr key={i} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-3">
+                    {/* Image preview */}
+                    <td className="px-4 py-2">
+                      <AdThumbnail rawAdName={ad.rawAdName} onOpen={setModalSrc} />
+                    </td>
+                    {/* Ad name */}
+                    <td className="px-3 py-2">
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] text-slate-400 w-4 flex-shrink-0">#{i + 1}</span>
                         <div>
@@ -293,23 +375,23 @@ export function MetaAdsClient({ ads }: Props) {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-2">
                       <SiteSourceBadge source={ad.siteSource} />
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-2 text-right">
                       <span className="font-bold text-[#5375FF]">{ad.becameLead}</span>
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-2 text-right">
                       <span className="font-semibold text-violet-600">{ad.profileCreated}</span>
                     </td>
-                    <td className="pl-4 pr-8 py-3 text-right">
+                    <td className="pl-4 pr-8 py-2 text-right">
                       <span className="font-semibold text-emerald-600">{ad.foundingMember}</span>
                     </td>
                   </tr>
                 ))}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-10 text-center text-slate-400 text-sm">
+                    <td colSpan={6} className="px-6 py-10 text-center text-slate-400 text-sm">
                       No ads found for this source.
                     </td>
                   </tr>
