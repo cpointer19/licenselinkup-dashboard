@@ -40,16 +40,18 @@ const STAGE_COLORS = {
   foundingMember: "#10b981",
 };
 
-// Map rawAdName substrings (lowercase) → image path in /public/ads/
+// Map rawAdName substrings (lowercase) → { image path, isVideo }
 // Add new entries here as creatives are uploaded.
-const AD_IMAGES: Record<string, string> = {
-  "state-line-map": "/ads/state-line-map.jpg",
+const AD_IMAGES: Record<string, { src: string; isVideo?: boolean }> = {
+  "state-line-map":        { src: "/ads/state-line-map.jpg" },
+  "state-line-lance-vo":   { src: "/ads/state-line-lance-vo.jpg",   isVideo: true },
+  "state-line-kill-a-deal":{ src: "/ads/state-line-kill-a-deal.jpg", isVideo: true },
 };
 
-function getAdImage(rawAdName: string): string | null {
+function getAdImage(rawAdName: string): { src: string; isVideo?: boolean } | null {
   const lower = rawAdName.toLowerCase();
-  for (const [key, path] of Object.entries(AD_IMAGES)) {
-    if (lower.includes(key)) return path;
+  for (const [key, val] of Object.entries(AD_IMAGES)) {
+    if (lower.includes(key)) return val;
   }
   return null;
 }
@@ -107,9 +109,9 @@ function AdThumbnail({
   rawAdName: string;
   onOpen: (src: string) => void;
 }) {
-  const src = getAdImage(rawAdName);
+  const ad = getAdImage(rawAdName);
 
-  if (!src) {
+  if (!ad) {
     return (
       <div className="h-12 w-10 flex-shrink-0 rounded border border-dashed border-slate-200 bg-slate-50 flex items-center justify-center">
         <ImageIcon className="h-3.5 w-3.5 text-slate-300" />
@@ -119,12 +121,19 @@ function AdThumbnail({
 
   return (
     <button
-      onClick={() => onOpen(src)}
-      className="h-12 w-10 flex-shrink-0 rounded overflow-hidden border border-slate-200 hover:border-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-[#5375FF] focus:ring-offset-1"
+      onClick={() => onOpen(ad.src)}
+      className="relative h-12 w-10 flex-shrink-0 rounded overflow-hidden border border-slate-200 hover:border-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-[#5375FF] focus:ring-offset-1"
       title="Click to preview"
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt="Ad creative" className="h-full w-full object-cover" />
+      <img src={ad.src} alt="Ad creative" className="h-full w-full object-cover" />
+      {ad.isVideo && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+          <div className="h-4 w-4 rounded-full bg-white/90 flex items-center justify-center">
+            <span className="text-[7px] text-slate-800 pl-0.5">▶</span>
+          </div>
+        </div>
+      )}
     </button>
   );
 }
