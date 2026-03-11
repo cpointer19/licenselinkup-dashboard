@@ -7,6 +7,7 @@ import {
   type ACField,
 } from "@/lib/activecampaign";
 import { fetchMetaAdSpend } from "@/lib/meta";
+import { isTestUser } from "@/lib/utils";
 import { MetaAdsClient, type AdRow } from "./meta-ads-client";
 
 export const dynamic = "force-dynamic";
@@ -58,17 +59,7 @@ async function getData(): Promise<{ ads: AdRow[]; totalSpend: number | null; tot
   const utmSourceFieldId = utmKeyToFieldId.get("utm_source");
   const utmTermFieldId = utmKeyToFieldId.get("utm_term");
 
-  // Use subscriber_count from AC tags API — same source as the Overview page
-  const totalLeadsAllTime = Number(
-    allTags.find((t) => t.tag.toLowerCase() === "became_lead")?.subscriber_count ?? 0
-  );
-  const totalProfilesAllTime = Number(
-    allTags.find((t) => t.tag.toLowerCase() === "profile_created")?.subscriber_count ?? 0
-  );
-
-  if (!utmContentFieldId && !utmCampaignFieldId) return { ads: [], totalSpend, totalLeadsAllTime, totalProfilesAllTime };
-
-  // Build lookup maps keyed by contact ID
+  // Build tag lookup map (needed for both all-time counts and ad attribution below)
   const tagsByContact = new Map<string, string[]>();
   for (const ct of allContactTags) {
     const name = tagIdToName.get(ct.tag) ?? "";
@@ -76,6 +67,38 @@ async function getData(): Promise<{ ads: AdRow[]; totalSpend: number | null; tot
     if (!tagsByContact.has(ct.contact)) tagsByContact.set(ct.contact, []);
     tagsByContact.get(ct.contact)!.push(name);
   }
+
+  // Count all-time leads/profiles using same filtering as pipeline-contacts API:
+  // exclude test users, founding_member_rejected, and peer_review_invited (for leads)
+  const KNOWN_LEADS = new Set([
+    "germanyjohnson@kw.com",
+    "mikeusa03@aol.com",
+    "wade@wadewright.com",
+  ]);
+
+  let totalLeadsAllTime = 0;
+  let totalProfilesAllTime = 0;
+  const leadEmailsSeen = new Set<string>();
+
+  for (const c of contacts) {
+    if (isTestUser(c.email)) continue;
+    const tagNames = tagsByContact.get(c.id) ?? [];
+    if (tagNames.includes("founding_member_rejected")) continue;
+    if (tagNames.includes("became_lead") && !tagNames.includes("peer_review_invited")) {
+      totalLeadsAllTime++;
+      leadEmailsSeen.add(c.email.toLowerCase());
+    }
+    if (tagNames.includes("profile_created")) totalProfilesAllTime++;
+  }
+  // Add any KNOWN_LEADS not already counted
+  for (const c of contacts) {
+    if (KNOWN_LEADS.has(c.email.toLowerCase()) && !leadEmailsSeen.has(c.email.toLowerCase())) {
+      const tagNames = tagsByContact.get(c.id) ?? [];
+      if (!tagNames.includes("peer_review_invited")) totalLeadsAllTime++;
+    }
+  }
+
+  if (!utmContentFieldId && !utmCampaignFieldId) return { ads: [], totalSpend, totalLeadsAllTime, totalProfilesAllTime };
 
   const fieldValuesByContact = new Map<string, typeof allFieldValues>();
   for (const fv of allFieldValues) {
