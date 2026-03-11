@@ -117,9 +117,9 @@ export async function POST(req: Request) {
   // Fetch AC data in background AFTER responding to Slack immediately
   after(() => fetchAndPostStats(responseUrl));
 
-  // Acknowledge within Slack's 3-second window
+  // Acknowledge within Slack's 3-second window — in_channel so everyone sees it
   return NextResponse.json({
-    response_type: "ephemeral",
+    response_type: "in_channel",
     text: "⏳ Fetching pipeline stats…",
   });
 }
