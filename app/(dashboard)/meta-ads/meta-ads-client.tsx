@@ -43,7 +43,7 @@ const STAGE_COLORS = {
 // Map rawAdName substrings (lowercase) → image path in /public/ads/
 // Add new entries here as creatives are uploaded.
 const AD_IMAGES: Record<string, string> = {
-  "state-line-map": "/ads/state-line-map.png",
+  "state-line-map": "/ads/state-line-map.jpg",
 };
 
 function getAdImage(rawAdName: string): string | null {
