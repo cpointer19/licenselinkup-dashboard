@@ -32,7 +32,7 @@ export function MapClient({ contacts }: { contacts: MapContact[] }) {
       {/* Pin count badge */}
       <div className="absolute top-4 left-4 z-[1000] flex items-center gap-2 rounded-full bg-[#2E3946]/90 backdrop-blur border border-white/10 px-3 py-1.5 text-xs font-medium text-slate-300">
         <MapPin className="h-3.5 w-3.5 text-[#5375FF]" />
-        {contacts.length} members mapped
+        {contacts.length} contacts mapped
       </div>
 
       {/* Detail modal */}
