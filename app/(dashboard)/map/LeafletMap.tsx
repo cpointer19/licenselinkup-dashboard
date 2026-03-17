@@ -4,8 +4,6 @@ import { useEffect } from "react";
 import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { MapContact } from "@/lib/map-contacts";
-import "leaflet/dist/leaflet.css";
-
 // Fix leaflet default icon paths broken by webpack
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
 L.Icon.Default.mergeOptions({

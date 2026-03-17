@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "ac-dashboard",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeExecutable": "/bin/bash",
+      "runtimeArgs": ["-c", "cd '/Users/curtispointer/LicenceLinkUp Marketing Dashbaord' && /usr/local/bin/node node_modules/next/dist/bin/next dev"],
       "port": 3000,
       "autoPort": true
     }

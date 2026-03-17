@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useState } from "react";
+import "leaflet/dist/leaflet.css";
 import { X, MapPin, User, Briefcase, Hash, Mail, CheckCircle, FileText } from "lucide-react";
 import type { MapContact } from "@/lib/map-contacts";
 
@@ -25,7 +26,7 @@ export function MapClient({ contacts }: { contacts: MapContact[] }) {
   const [selected, setSelected] = useState<MapContact | null>(null);
 
   return (
-    <div className="relative h-full w-full rounded-xl overflow-hidden border border-white/10">
+    <div className="relative w-full rounded-xl overflow-hidden border border-white/10" style={{ height: "100%" }}>
       <LeafletMap contacts={contacts} onSelect={setSelected} />
 
       {/* Pin count badge */}
