@@ -50,12 +50,12 @@ export default function LeafletMap({
     <MapContainer
       center={[39, -98]}
       zoom={4}
-      style={{ height: "100%", width: "100%", background: "#f2f0eb" }}
+      style={{ height: "100%", width: "100%", background: "#e8e0d8" }}
       zoomControl={true}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
       />
       <FitBounds contacts={contacts} />
       {contacts.map((c, i) => (
