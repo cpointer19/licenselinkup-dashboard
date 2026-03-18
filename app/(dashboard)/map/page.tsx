@@ -11,7 +11,7 @@ export default function MapPage() {
         title="Member Map"
         description={`${MAP_CONTACTS.length} contacts · click a pin to view details`}
       />
-      <div style={{ height: "calc(100vh - 11rem)" }}>
+      <div style={{ height: "calc(100vh - 7rem)" }}>
         <MapClient contacts={MAP_CONTACTS} />
       </div>
     </div>

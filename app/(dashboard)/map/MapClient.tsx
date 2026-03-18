@@ -35,6 +35,18 @@ export function MapClient({ contacts }: { contacts: MapContact[] }) {
         {contacts.length} contacts mapped
       </div>
 
+      {/* Legend */}
+      <div className="absolute bottom-6 left-4 z-[1000] flex flex-col gap-1.5 rounded-xl bg-[#2E3946]/90 backdrop-blur border border-white/10 px-3.5 py-3">
+        <div className="flex items-center gap-2 text-xs text-slate-300">
+          <span className="inline-block w-3 h-3 rounded-full" style={{ background: "#5375FF" }} />
+          Agent
+        </div>
+        <div className="flex items-center gap-2 text-xs text-slate-300">
+          <span className="inline-block w-3 h-3 rounded-full" style={{ background: "#a855f7" }} />
+          Broker
+        </div>
+      </div>
+
       {/* Detail modal */}
       {selected && (
         <div className="absolute inset-y-0 right-0 z-[1001] w-80 bg-[#2E3946] border-l border-white/10 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
