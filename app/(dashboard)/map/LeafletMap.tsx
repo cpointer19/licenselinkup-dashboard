@@ -16,16 +16,16 @@ L.Icon.Default.mergeOptions({
 function makeIcon(role: string) {
   const isBroker = role.trim().toLowerCase() === "broker";
   const color = isBroker ? "#a855f7" : "#5375FF";
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="24" height="36">
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="16" height="24">
     <path d="M12 0C5.373 0 0 5.373 0 12c0 9 12 24 12 24S24 21 24 12C24 5.373 18.627 0 12 0z" fill="${color}" stroke="white" stroke-width="1.5"/>
     <circle cx="12" cy="12" r="5" fill="white"/>
   </svg>`;
   return L.divIcon({
     html: svg,
     className: "",
-    iconSize: [24, 36],
-    iconAnchor: [12, 36],
-    popupAnchor: [0, -36],
+    iconSize: [16, 24],
+    iconAnchor: [8, 24],
+    popupAnchor: [0, -24],
   });
 }
 
@@ -50,12 +50,12 @@ export default function LeafletMap({
     <MapContainer
       center={[39, -98]}
       zoom={4}
-      style={{ height: "100%", width: "100%", background: "#1a2030" }}
+      style={{ height: "100%", width: "100%", background: "#f2f0eb" }}
       zoomControl={true}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
       />
       <FitBounds contacts={contacts} />
       {contacts.map((c, i) => (
