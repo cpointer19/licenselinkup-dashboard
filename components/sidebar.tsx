@@ -12,14 +12,12 @@ import {
   Mail,
   ChevronRight,
   LogOut,
-  BarChart2,
   MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/",              label: "Overview",            icon: LayoutDashboard },
-  { href: "/meta-ads",      label: "Meta Ad Performance", icon: BarChart2 },
   { href: "/contacts",      label: "Contacts",            icon: Users },
   { href: "/map",           label: "Map",                 icon: MapPin },
   { href: "/automations",   label: "Automations",         icon: Zap },
