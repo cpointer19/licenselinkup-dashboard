@@ -1,24 +1,19 @@
 "use client";
 
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useMemo } from "react";
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
-import { Users, Zap, Mail, Tag, TrendingUp, List, ArrowRight, UserCheck, ClipboardCheck, Award, ChevronDown, ChevronUp, Loader2, BarChart2 } from "lucide-react";
+import { Users, Zap, Mail, Tag, TrendingUp, List, ArrowRight, UserCheck, ClipboardCheck, Award, BarChart2 } from "lucide-react";
 import Link from "next/link";
 import type { ACContact, ACAutomation, ACCampaign, ACList, ACTag } from "@/lib/activecampaign";
 import { StatsCard } from "@/components/stats-card";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
-} from "@/components/ui/dialog";
 import { PageHeader } from "@/components/page-header";
 import { CsvExportButton } from "@/components/csv-export-button";
 import { ClaudeBot } from "@/components/claude-bot";
-import { ContactDetail } from "./contacts/contact-detail";
 import { formatDate, formatTagName } from "@/lib/utils";
 
 interface Props {
@@ -80,228 +75,79 @@ const PIPELINE_META = [
   { stage: "onboarding_complete", label: "Founding Members",    subtext: "We've vetted these people and verified they have an active license.",                                                        icon: Award,          color: "#10b981", bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700" },
 ];
 
-interface PipelineContact {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  cdate?: string;
-}
-
 function ConversionPipeline({ stages, totalContacts, rejectedCount }: { stages: { stage: string; count: number }[]; totalContacts: number; rejectedCount: number }) {
-  const [expanded, setExpanded] = useState(true);
-  const [pipelineContacts, setPipelineContacts] = useState<Record<string, PipelineContact[]> | null>(null);
-  const [loadingContacts, setLoadingContacts] = useState(false);
-  const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
-
-  const effectiveStages = stages.map((s) => ({
-    ...s,
-    count: pipelineContacts ? (pipelineContacts[s.stage]?.length ?? 0) : s.count,
-  }));
-  const maxCount = Math.max(...effectiveStages.map((s) => s.count), 1);
-  const firstCount = effectiveStages[0]?.count ?? 0;
-  const lastCount = effectiveStages[effectiveStages.length - 1]?.count ?? 0;
+  const maxCount = Math.max(...stages.map((s) => s.count), 1);
+  const firstCount = stages[0]?.count ?? 0;
+  const lastCount = stages[stages.length - 1]?.count ?? 0;
   const overallRate = firstCount > 0 ? ((lastCount / firstCount) * 100).toFixed(1) : "0";
 
-  // Auto-fetch contacts on mount since expanded by default
-  useEffect(() => {
-    setLoadingContacts(true);
-    fetch("/api/ac/pipeline-contacts")
-      .then((r) => r.json())
-      .then((d) => {
-        setPipelineContacts(d.stages ?? {});
-        setLoadingContacts(false);
-      })
-      .catch(() => setLoadingContacts(false));
-  }, []);
-
-  const toggleExpand = useCallback(() => {
-    if (!expanded && !pipelineContacts) {
-      setLoadingContacts(true);
-      fetch("/api/ac/pipeline-contacts")
-        .then((r) => r.json())
-        .then((d) => {
-          setPipelineContacts(d.stages ?? {});
-          setLoadingContacts(false);
-        })
-        .catch(() => setLoadingContacts(false));
-    }
-    setExpanded((v) => !v);
-  }, [expanded, pipelineContacts]);
-
   return (
-    <>
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                Conversion Pipeline
-              </CardTitle>
-              <CardDescription>Landing page signup &rarr; Profile &rarr; Founding member</CardDescription>
-            </div>
-            <div className="flex items-center gap-4">
-              {rejectedCount > 0 && (
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-red-500">{rejectedCount}</p>
-                  <p className="text-xs text-slate-500">Rejected</p>
-                </div>
-              )}
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              Conversion Pipeline
+            </CardTitle>
+            <CardDescription>Landing page signup &rarr; Profile &rarr; Founding member</CardDescription>
+          </div>
+          <div className="flex items-center gap-4">
+            {rejectedCount > 0 && (
               <div className="text-right">
-                <p className="text-2xl font-bold text-slate-900">{overallRate}%</p>
-                <p className="text-xs text-slate-500">Full conversion rate</p>
+                <p className="text-2xl font-bold text-red-500">{rejectedCount}</p>
+                <p className="text-xs text-slate-500">Rejected</p>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleExpand}
-                className="gap-1 text-xs text-slate-500"
-              >
-                {loadingContacts ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : expanded ? (
-                  <ChevronUp className="h-3.5 w-3.5" />
-                ) : (
-                  <ChevronDown className="h-3.5 w-3.5" />
-                )}
-                {expanded ? "Collapse" : "Show Contacts"}
-              </Button>
+            )}
+            <div className="text-right">
+              <p className="text-2xl font-bold text-slate-900">{overallRate}%</p>
+              <p className="text-xs text-slate-500">Full conversion rate</p>
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          {/* Stage summary cards */}
-          <div className="flex items-stretch gap-3">
-            {effectiveStages.map((stage, idx) => {
-              const meta = PIPELINE_META.find((m) => m.stage === stage.stage) ?? PIPELINE_META[0];
-              const Icon = meta.icon;
-              const barPct = Math.max((stage.count / maxCount) * 100, 8);
-              const nextStage = effectiveStages[idx + 1];
-              const advanceRate = nextStage && stage.count > 0
-                ? ((nextStage.count / stage.count) * 100).toFixed(0)
-                : null;
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-stretch gap-3">
+          {stages.map((stage, idx) => {
+            const meta = PIPELINE_META.find((m) => m.stage === stage.stage) ?? PIPELINE_META[0];
+            const Icon = meta.icon;
+            const barPct = Math.max((stage.count / maxCount) * 100, 8);
+            const nextStage = stages[idx + 1];
+            const advanceRate = nextStage && stage.count > 0
+              ? ((nextStage.count / stage.count) * 100).toFixed(0)
+              : null;
 
-              return (
-                <div key={stage.stage} className="flex items-center gap-3 flex-1">
-                  <div className={`flex-1 rounded-xl border ${meta.border} ${meta.bg} p-4 transition-all hover:shadow-md`}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-white/80`}>
-                        <Icon className="h-4 w-4" style={{ color: meta.color }} />
-                      </div>
-                      <span className={`text-xs font-semibold ${meta.text}`}>{meta.label}</span>
+            return (
+              <div key={stage.stage} className="flex items-center gap-3 flex-1">
+                <div className={`flex-1 rounded-xl border ${meta.border} ${meta.bg} p-4 transition-all hover:shadow-md`}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-white/80`}>
+                      <Icon className="h-4 w-4" style={{ color: meta.color }} />
                     </div>
-                    <p className={`text-3xl font-bold ${meta.text}`}>{stage.count.toLocaleString()}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      {totalContacts > 0 ? `${((stage.count / totalContacts) * 100).toFixed(0)}% of all contacts` : "contacts"}
-                    </p>
-                    {/* Progress bar */}
-                    <div className="mt-3 h-2 w-full rounded-full bg-white/80 overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-700"
-                        style={{ width: `${barPct}%`, backgroundColor: meta.color }}
-                      />
-                    </div>
+                    <span className={`text-xs font-semibold ${meta.text}`}>{meta.label}</span>
                   </div>
-                  {idx < effectiveStages.length - 1 && (
-                    <div className="flex flex-col items-center gap-1 flex-shrink-0">
-                      <ArrowRight className="h-5 w-5 text-slate-300" />
-                      {advanceRate && (
-                        <span className="text-[10px] font-medium text-slate-400">{advanceRate}%</span>
-                      )}
-                    </div>
-                  )}
+                  <p className={`text-3xl font-bold ${meta.text}`}>{stage.count.toLocaleString()}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">contacts</p>
+                  <div className="mt-3 h-2 w-full rounded-full bg-white/80 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{ width: `${barPct}%`, backgroundColor: meta.color }}
+                    />
+                  </div>
                 </div>
-              );
-            })}
-          </div>
-
-          {/* Expandable swim lanes */}
-          {expanded && (
-            <div className="mt-4 border-t border-slate-100 pt-4">
-              {loadingContacts && !pipelineContacts ? (
-                <div className="flex items-center justify-center gap-2 py-6 text-sm text-slate-500">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Loading contacts…
-                </div>
-              ) : (
-                <div className="grid grid-cols-3 gap-3">
-                  {PIPELINE_META.map((meta) => {
-                    const contacts = [...(pipelineContacts?.[meta.stage] ?? [])].sort((a, b) => {
-                      const aReal = isRealLead(a.email) ? 0 : 1;
-                      const bReal = isRealLead(b.email) ? 0 : 1;
-                      return aReal - bReal;
-                    });
-                    const Icon = meta.icon;
-                    return (
-                      <div key={meta.stage} className={`rounded-xl border ${meta.border} ${meta.bg} p-3`}>
-                        <div className="mb-3 pb-2 border-b border-white/60">
-                          <div className="flex items-center gap-2">
-                            <Icon className="h-3.5 w-3.5" style={{ color: meta.color }} />
-                            <span className={`text-xs font-semibold ${meta.text}`}>{meta.label}</span>
-                            <Badge variant="secondary" className="ml-auto text-[10px]">{contacts.length}</Badge>
-                          </div>
-                          <p className="text-[10px] text-slate-400 mt-1 leading-tight">{meta.subtext}</p>
-                        </div>
-                        <div className="space-y-1.5 max-h-64 overflow-y-auto">
-                          {contacts.length === 0 && (
-                            <p className="text-xs text-slate-400 py-2 text-center">No contacts</p>
-                          )}
-                          {contacts.map((c) => {
-                            const name = [c.firstName, c.lastName].filter(Boolean).join(" ") || c.email;
-                            const realLead = isRealLead(c.email);
-                            return (
-                              <button
-                                key={c.id}
-                                onClick={() => setSelectedContactId(c.id)}
-                                className={`w-full flex items-center gap-2.5 rounded-lg border p-2.5 transition-all text-left group ${
-                                  realLead
-                                    ? "bg-emerald-50/80 border-emerald-200 hover:border-emerald-300 hover:shadow-sm"
-                                    : "bg-white/80 border-white hover:border-slate-200 hover:shadow-sm"
-                                }`}
-                              >
-                                <div
-                                  className="flex h-8 w-8 items-center justify-center rounded-full text-white text-xs font-bold flex-shrink-0"
-                                  style={{ backgroundColor: realLead ? "#10b981" : meta.color }}
-                                >
-                                  {name.charAt(0).toUpperCase()}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-center gap-1.5">
-                                    <p className="text-sm font-medium text-slate-800 truncate group-hover:text-slate-900">{name}</p>
-                                    {realLead && (
-                                      <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[9px] px-1.5 py-0 flex-shrink-0">Founding Applicant Peer</Badge>
-                                    )}
-                                  </div>
-                                  <p className="text-[11px] text-slate-400 truncate">{c.email}</p>
-                                </div>
-                                {c.cdate && (
-                                  <span className="text-[10px] text-slate-300 flex-shrink-0">{formatDate(c.cdate)}</span>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Contact detail modal */}
-      <Dialog open={!!selectedContactId} onOpenChange={(o) => !o && setSelectedContactId(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Contact Details</DialogTitle>
-            <DialogDescription>Full profile, tags, automations &amp; email history</DialogDescription>
-          </DialogHeader>
-          {selectedContactId && <ContactDetail contactId={selectedContactId} />}
-        </DialogContent>
-      </Dialog>
-    </>
+                {idx < stages.length - 1 && (
+                  <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                    <ArrowRight className="h-5 w-5 text-slate-300" />
+                    {advanceRate && (
+                      <span className="text-[10px] font-medium text-slate-400">{advanceRate}%</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
