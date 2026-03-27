@@ -10,7 +10,6 @@ import { PageHeader } from "@/components/page-header";
 import { CsvExportButton } from "@/components/csv-export-button";
 import { StatsCard } from "@/components/stats-card";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -19,13 +18,6 @@ import { formatDate } from "@/lib/utils";
 interface Props {
   campaigns: ACCampaign[];
 }
-
-const STATUS_MAP: Record<string, { label: string; variant: "success" | "info" | "outline" | "warning" | "secondary" }> = {
-  "5": { label: "Sent",      variant: "success" },
-  "1": { label: "Draft",     variant: "outline" },
-  "6": { label: "Scheduled", variant: "info" },
-  "0": { label: "Inactive",  variant: "secondary" },
-};
 
 export function CampaignsClient({ campaigns }: Props) {
   const [sort, setSort] = useState<"sent" | "opens" | "clicks">("sent");
@@ -136,7 +128,6 @@ export function CampaignsClient({ campaigns }: Props) {
               <TableHead className="text-right">Clicks</TableHead>
               <TableHead className="text-right">Bounces</TableHead>
               <TableHead className="text-right">Unsubs</TableHead>
-              <TableHead>Status</TableHead>
               <TableHead>Date</TableHead>
             </TableRow>
           </TableHeader>
@@ -144,7 +135,6 @@ export function CampaignsClient({ campaigns }: Props) {
             {sortedCampaigns.map((c) => {
               const openRate  = Number(c.send_amt) ? ((Number(c.uniqueopens) / Number(c.send_amt)) * 100).toFixed(1) : "—";
               const clickRate = Number(c.send_amt) ? ((Number(c.uniquelinkclicks) / Number(c.send_amt)) * 100).toFixed(1) : "—";
-              const st        = STATUS_MAP[c.status] ?? { label: c.status, variant: "secondary" as const };
               return (
                 <TableRow key={c.id}>
                   <TableCell>
@@ -162,14 +152,13 @@ export function CampaignsClient({ campaigns }: Props) {
                   </TableCell>
                   <TableCell className="text-right text-slate-500">{Number(c.hardbounces) + Number(c.softbounces)}</TableCell>
                   <TableCell className="text-right text-slate-500">{c.unsubscribes}</TableCell>
-                  <TableCell><Badge variant={st.variant}>{st.label}</Badge></TableCell>
                   <TableCell className="text-xs text-slate-400">{formatDate(c.sdate)}</TableCell>
                 </TableRow>
               );
             })}
             {campaigns.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-10 text-slate-400">No campaigns found.</TableCell>
+                <TableCell colSpan={7} className="text-center py-10 text-slate-400">No campaigns found.</TableCell>
               </TableRow>
             )}
           </TableBody>

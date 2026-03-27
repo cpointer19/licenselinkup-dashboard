@@ -7,8 +7,6 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
-  Users,
-  Zap,
   Mail,
   ChevronRight,
   LogOut,
@@ -18,9 +16,7 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/",              label: "Overview",            icon: LayoutDashboard },
-  { href: "/contacts",      label: "Contacts",            icon: Users },
   { href: "/map",           label: "Map",                 icon: MapPin },
-  { href: "/automations",   label: "Automations",         icon: Zap },
   { href: "/campaigns",     label: "Campaigns",           icon: Mail },
 ];
 
