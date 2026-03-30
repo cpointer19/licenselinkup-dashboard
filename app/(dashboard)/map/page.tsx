@@ -11,7 +11,7 @@ export default function MapPage() {
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Member Map"
-        description={`${MAP_CONTACTS.length} contacts · click a pin to view details`}
+        description={`${MAP_CONTACTS.length} people who have provided a license in their Profile`}
       />
       <Link
         href="/"
@@ -28,9 +28,7 @@ export default function MapPage() {
         </div>
         <ArrowRight className="h-4 w-4 text-[#5375FF] flex-shrink-0 transition-transform group-hover:translate-x-0.5" />
       </Link>
-      <div style={{ height: "calc(100vh - 7rem)" }}>
-        <MapClient contacts={MAP_CONTACTS} />
-      </div>
+      <MapClient contacts={MAP_CONTACTS} />
     </div>
   );
 }

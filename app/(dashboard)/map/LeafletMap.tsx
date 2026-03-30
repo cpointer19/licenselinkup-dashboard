@@ -12,10 +12,16 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-// Custom pin icon — color coded by role
-function makeIcon(role: string) {
-  const isBroker = role.trim().toLowerCase() === "broker";
-  const color = isBroker ? "#a855f7" : "#5375FF";
+// Pin color: founding member (green), multi-state (purple), broker (violet), agent (blue)
+function pinColor(c: MapContact) {
+  if (c.foundingMemberStatus === "Approved") return "#10b981";
+  if (c.multiState) return "#a855f7";
+  if (c.role.trim().toLowerCase() === "broker") return "#7c3aed";
+  return "#5375FF";
+}
+
+function makeIcon(contact: MapContact) {
+  const color = pinColor(contact);
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="16" height="24">
     <path d="M12 0C5.373 0 0 5.373 0 12c0 9 12 24 12 24S24 21 24 12C24 5.373 18.627 0 12 0z" fill="${color}" stroke="white" stroke-width="1.5"/>
     <circle cx="12" cy="12" r="5" fill="white"/>
@@ -62,7 +68,7 @@ export default function LeafletMap({
         <Marker
           key={i}
           position={[c.lat, c.lng]}
-          icon={makeIcon(c.role)}
+          icon={makeIcon(c)}
           eventHandlers={{ click: () => onSelect(c) }}
         />
       ))}
