@@ -2,16 +2,71 @@ import Link from "next/link";
 import { LayoutDashboard, ArrowRight } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { MAP_CONTACTS } from "@/lib/map-contacts";
+import { fetchTags, fetchAllContacts, fetchAllContactTags } from "@/lib/activecampaign";
+import { isTestUser } from "@/lib/utils";
 import { MapClient } from "./MapClient";
 
 export const metadata = { title: "Member Map — LicenseLinkUp" };
 
-export default function MapPage() {
+export const revalidate = 60;
+
+async function getFoundingEmails(): Promise<Set<string>> {
+  try {
+    const [tags, contacts, contactTags] = await Promise.all([
+      fetchTags(),
+      fetchAllContacts(),
+      fetchAllContactTags(),
+    ]);
+
+    const onboardingTag = tags.find((t) => t.tag.toLowerCase() === "onboarding_complete");
+    const rejectedTag = tags.find((t) => t.tag.toLowerCase() === "founding_member_rejected");
+    if (!onboardingTag) return new Set();
+
+    const rejectedTagId = rejectedTag?.id;
+
+    // Build contact ID → email map (excluding test users)
+    const idToEmail = new Map<string, string>();
+    for (const c of contacts) {
+      if (!isTestUser(c.email)) idToEmail.set(c.id, c.email.toLowerCase());
+    }
+
+    // Find contacts rejected
+    const rejectedContactIds = new Set<string>();
+    if (rejectedTagId) {
+      for (const ct of contactTags) {
+        if (ct.tag === rejectedTagId) rejectedContactIds.add(ct.contact);
+      }
+    }
+
+    // Find contacts with onboarding_complete tag (not rejected, not test)
+    const foundingEmails = new Set<string>();
+    for (const ct of contactTags) {
+      if (ct.tag === onboardingTag.id && !rejectedContactIds.has(ct.contact)) {
+        const email = idToEmail.get(ct.contact);
+        if (email) foundingEmails.add(email);
+      }
+    }
+
+    return foundingEmails;
+  } catch {
+    return new Set();
+  }
+}
+
+export default async function MapPage() {
+  const foundingEmails = await getFoundingEmails();
+
+  // Override foundingMemberStatus based on AC data
+  const contacts = MAP_CONTACTS.map((c) => ({
+    ...c,
+    foundingMemberStatus: c.email && foundingEmails.has(c.email.toLowerCase()) ? "Approved" : "",
+  }));
+
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Member Map"
-        description={`${MAP_CONTACTS.length} people who have provided a license in their Profile`}
+        description={`${contacts.length} people who have provided a license in their Profile`}
       />
       <Link
         href="/"
@@ -28,7 +83,7 @@ export default function MapPage() {
         </div>
         <ArrowRight className="h-4 w-4 text-[#5375FF] flex-shrink-0 transition-transform group-hover:translate-x-0.5" />
       </Link>
-      <MapClient contacts={MAP_CONTACTS} />
+      <MapClient contacts={contacts} />
     </div>
   );
 }
