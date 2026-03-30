@@ -46,8 +46,8 @@ function FoundingMemberTables({ contacts }: { contacts: MapContact[] }) {
   const byCity = useMemo(() => {
     const map = new Map<string, number>();
     for (const c of founding) {
-      if (c.zip) {
-        const label = `${c.zip} · ${c.state.split(", ")[0]}`;
+      if (c.city) {
+        const label = `${c.city}, ${c.state.split(", ")[0]}`;
         map.set(label, (map.get(label) ?? 0) + 1);
       }
     }
@@ -63,7 +63,7 @@ function FoundingMemberTables({ contacts }: { contacts: MapContact[] }) {
     // For true multi-sheet Excel, use a Blob with xlsx mime type trick
     // Simpler: generate a proper .xlsx via a hidden form or just use CSV
     const stateCSV = "State,Founding Members\n" + byState.map((r) => `${r.name},${r.count}`).join("\n");
-    const cityCSV = "Zip · State,Founding Members\n" + byCity.map((r) => `"${r.name}",${r.count}`).join("\n");
+    const cityCSV = "City,Founding Members\n" + byCity.map((r) => `"${r.name}",${r.count}`).join("\n");
 
     // Download state sheet
     const blob1 = new Blob([stateCSV], { type: "text/csv" });
@@ -121,7 +121,7 @@ function FoundingMemberTables({ contacts }: { contacts: MapContact[] }) {
         <table className="w-full text-sm">
           <thead className="sticky top-0 bg-slate-50">
             <tr>
-              <th className="text-left px-5 py-2 text-xs font-medium text-slate-500">{view === "state" ? "State" : "Zip · State"}</th>
+              <th className="text-left px-5 py-2 text-xs font-medium text-slate-500">{view === "state" ? "State" : "City"}</th>
               <th className="text-right px-5 py-2 text-xs font-medium text-slate-500">Founding Members</th>
             </tr>
           </thead>
