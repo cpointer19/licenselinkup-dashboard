@@ -157,15 +157,8 @@ export function MapClient({ contacts }: { contacts: MapContact[] }) {
         </div>
 
         {/* Legend */}
-        <div className="absolute bottom-6 left-4 z-[1000] flex flex-col gap-1.5 rounded-xl bg-[#2E3946]/90 backdrop-blur border border-white/10 px-3.5 py-3">
-          <div className="flex items-center gap-2 text-xs text-slate-300">
-            <span className="inline-block w-3 h-3 rounded-full" style={{ background: "#10b981" }} />
-            Founding Member
-          </div>
-          <div className="flex items-center gap-2 text-xs text-slate-300">
-            <span className="inline-block w-3 h-3 rounded-full" style={{ background: "#a855f7" }} />
-            Licensed in Multiple States
-          </div>
+        <div className="absolute bottom-6 left-4 z-[1000] flex flex-col gap-2 rounded-xl bg-[#2E3946]/90 backdrop-blur border border-white/10 px-3.5 py-3">
+          <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Pin Color</p>
           <div className="flex items-center gap-2 text-xs text-slate-300">
             <span className="inline-block w-3 h-3 rounded-full" style={{ background: "#5375FF" }} />
             Agent
@@ -173,6 +166,16 @@ export function MapClient({ contacts }: { contacts: MapContact[] }) {
           <div className="flex items-center gap-2 text-xs text-slate-300">
             <span className="inline-block w-3 h-3 rounded-full" style={{ background: "#7c3aed" }} />
             Broker
+          </div>
+          <div className="border-t border-white/10 my-0.5" />
+          <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Ring</p>
+          <div className="flex items-center gap-2 text-xs text-slate-300">
+            <span className="inline-block w-3 h-3 rounded-full border-2" style={{ borderColor: "#10b981", background: "transparent" }} />
+            Founding Member
+          </div>
+          <div className="flex items-center gap-2 text-xs text-slate-300">
+            <span className="inline-block w-3 h-3 rounded-full border-2" style={{ borderColor: "#a855f7", background: "transparent" }} />
+            Multi-State Licensed
           </div>
         </div>
 

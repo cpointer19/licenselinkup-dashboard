@@ -12,26 +12,33 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-// Pin color: founding member (green), multi-state (purple), broker (violet), agent (blue)
-function pinColor(c: MapContact) {
-  if (c.foundingMemberStatus === "Approved") return "#10b981";
-  if (c.multiState) return "#a855f7";
-  if (c.role.trim().toLowerCase() === "broker") return "#7c3aed";
-  return "#5375FF";
-}
-
+// Pin fill = role (blue=Agent, violet=Broker). Rings = status modifiers.
 function makeIcon(contact: MapContact) {
-  const color = pinColor(contact);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="16" height="24">
-    <path d="M12 0C5.373 0 0 5.373 0 12c0 9 12 24 12 24S24 21 24 12C24 5.373 18.627 0 12 0z" fill="${color}" stroke="white" stroke-width="1.5"/>
-    <circle cx="12" cy="12" r="5" fill="white"/>
+  const isBroker = contact.role.trim().toLowerCase() === "broker";
+  const fill = isBroker ? "#7c3aed" : "#5375FF";
+  const isFounding = contact.foundingMemberStatus === "Approved";
+  const isMulti = contact.multiState;
+
+  // Outer ring color: green for founding, purple for multi-state, white default
+  const ringColor = isFounding ? "#10b981" : isMulti ? "#a855f7" : "white";
+  const ringWidth = isFounding || isMulti ? 2.5 : 1.5;
+
+  // Larger pin if it has a ring so the ring is visible
+  const size = isFounding || isMulti ? 20 : 16;
+  const height = isFounding || isMulti ? 30 : 24;
+  const scale = size / 16;
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="${size}" height="${height}">
+    <path d="M12 0C5.373 0 0 5.373 0 12c0 9 12 24 12 24S24 21 24 12C24 5.373 18.627 0 12 0z" fill="${fill}" stroke="${ringColor}" stroke-width="${ringWidth}"/>
+    <circle cx="12" cy="12" r="4.5" fill="white"/>
+    ${isFounding && isMulti ? `<circle cx="12" cy="12" r="7.5" fill="none" stroke="#a855f7" stroke-width="1.2"/>` : ""}
   </svg>`;
   return L.divIcon({
     html: svg,
     className: "",
-    iconSize: [16, 24],
-    iconAnchor: [8, 24],
-    popupAnchor: [0, -24],
+    iconSize: [size, height],
+    iconAnchor: [size / 2, height],
+    popupAnchor: [0, -height],
   });
 }
 
