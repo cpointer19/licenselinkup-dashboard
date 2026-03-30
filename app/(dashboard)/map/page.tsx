@@ -8,7 +8,7 @@ import { MapClient } from "./MapClient";
 
 export const metadata = { title: "Member Map — LicenseLinkUp" };
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 async function getFoundingEmails(): Promise<Set<string>> {
   try {
