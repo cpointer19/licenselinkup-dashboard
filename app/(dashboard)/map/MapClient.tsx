@@ -23,17 +23,23 @@ function DetailRow({ label, value, icon: Icon }: { label: string; value: string;
 
 // ─── Founding Member Tables ──────────────────────────────────────────────────
 
-function FoundingMemberTables({ contacts }: { contacts: MapContact[] }) {
+function LocationTable({ contacts }: { contacts: MapContact[] }) {
   const [view, setView] = useState<"state" | "city">("state");
+  const [foundingOnly, setFoundingOnly] = useState(false);
 
-  const founding = useMemo(
-    () => contacts.filter((c) => c.foundingMemberStatus === "Approved"),
+  const filtered = useMemo(
+    () => foundingOnly ? contacts.filter((c) => c.foundingMemberStatus === "Approved") : contacts,
+    [contacts, foundingOnly],
+  );
+
+  const foundingCount = useMemo(
+    () => contacts.filter((c) => c.foundingMemberStatus === "Approved").length,
     [contacts],
   );
 
   const byState = useMemo(() => {
     const map = new Map<string, number>();
-    for (const c of founding) {
+    for (const c of filtered) {
       for (const st of c.state.split(", ")) {
         if (st) map.set(st, (map.get(st) ?? 0) + 1);
       }
@@ -41,11 +47,11 @@ function FoundingMemberTables({ contacts }: { contacts: MapContact[] }) {
     return Array.from(map.entries())
       .sort((a, b) => b[1] - a[1])
       .map(([name, count]) => ({ name, count }));
-  }, [founding]);
+  }, [filtered]);
 
   const byCity = useMemo(() => {
     const map = new Map<string, number>();
-    for (const c of founding) {
+    for (const c of filtered) {
       if (c.city) {
         const label = `${c.city}, ${c.state.split(", ")[0]}`;
         map.set(label, (map.get(label) ?? 0) + 1);
@@ -54,33 +60,30 @@ function FoundingMemberTables({ contacts }: { contacts: MapContact[] }) {
     return Array.from(map.entries())
       .sort((a, b) => b[1] - a[1])
       .map(([name, count]) => ({ name, count }));
-  }, [founding]);
+  }, [filtered]);
 
   const rows = view === "state" ? byState : byCity;
+  const countLabel = foundingOnly ? "Founding Members" : "Licensed Contacts";
 
   const handleDownload = () => {
-    // Build CSV for both sheets (Excel will get two sheets via a single TSV-style approach)
-    // For true multi-sheet Excel, use a Blob with xlsx mime type trick
-    // Simpler: generate a proper .xlsx via a hidden form or just use CSV
-    const stateCSV = "State,Founding Members\n" + byState.map((r) => `${r.name},${r.count}`).join("\n");
-    const cityCSV = "City,Founding Members\n" + byCity.map((r) => `"${r.name}",${r.count}`).join("\n");
+    const prefix = foundingOnly ? "founding-members" : "licensed-contacts";
+    const stateCSV = `State,${countLabel}\n` + byState.map((r) => `${r.name},${r.count}`).join("\n");
+    const cityCSV = `City,${countLabel}\n` + byCity.map((r) => `"${r.name}",${r.count}`).join("\n");
 
-    // Download state sheet
     const blob1 = new Blob([stateCSV], { type: "text/csv" });
     const url1 = URL.createObjectURL(blob1);
     const a1 = document.createElement("a");
     a1.href = url1;
-    a1.download = "founding-members-by-state.csv";
+    a1.download = `${prefix}-by-state.csv`;
     a1.click();
     URL.revokeObjectURL(url1);
 
-    // Download city sheet
     setTimeout(() => {
       const blob2 = new Blob([cityCSV], { type: "text/csv" });
       const url2 = URL.createObjectURL(blob2);
       const a2 = document.createElement("a");
       a2.href = url2;
-      a2.download = "founding-members-by-city.csv";
+      a2.download = `${prefix}-by-city.csv`;
       a2.click();
       URL.revokeObjectURL(url2);
     }, 300);
@@ -90,10 +93,25 @@ function FoundingMemberTables({ contacts }: { contacts: MapContact[] }) {
     <div className="rounded-xl border border-slate-200 bg-white">
       <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
         <div>
-          <h3 className="text-sm font-semibold text-slate-800">Founding Members by Location</h3>
-          <p className="text-xs text-slate-500 mt-0.5">{founding.length} approved founding members</p>
+          <h3 className="text-sm font-semibold text-slate-800">
+            {foundingOnly ? "Founding Members" : "Licensed Contacts"} by Location
+          </h3>
+          <p className="text-xs text-slate-500 mt-0.5">
+            {filtered.length} {foundingOnly ? "approved founding members" : "people with a verified license"}
+          </p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setFoundingOnly((v) => !v)}
+            className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs transition-colors ${
+              foundingOnly
+                ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                : "border-slate-200 text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            <span className={`inline-block w-2 h-2 rounded-full ${foundingOnly ? "bg-emerald-500" : "bg-slate-300"}`} />
+            Founding Members
+          </button>
           <div className="flex rounded-lg border border-slate-200 overflow-hidden text-xs">
             <button
               onClick={() => setView("state")}
@@ -122,7 +140,7 @@ function FoundingMemberTables({ contacts }: { contacts: MapContact[] }) {
           <thead className="sticky top-0 bg-slate-50">
             <tr>
               <th className="text-left px-5 py-2 text-xs font-medium text-slate-500">{view === "state" ? "State" : "City"}</th>
-              <th className="text-right px-5 py-2 text-xs font-medium text-slate-500">Founding Members</th>
+              <th className="text-right px-5 py-2 text-xs font-medium text-slate-500">{countLabel}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
@@ -227,8 +245,8 @@ export function MapClient({ contacts }: { contacts: MapContact[] }) {
         )}
       </div>
 
-      {/* Founding Member Tables */}
-      <FoundingMemberTables contacts={contacts} />
+      {/* Location Table */}
+      <LocationTable contacts={contacts} />
     </div>
   );
 }
