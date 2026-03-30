@@ -1,12 +1,41 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import "leaflet/dist/leaflet.css";
 import { X, MapPin, User, Briefcase, Hash, Mail, CheckCircle, FileText, Clock, Shield, Download, ChevronRight } from "lucide-react";
 import type { MapContact } from "@/lib/map-contacts";
 
 const LeafletMap = dynamic(() => import("./LeafletMap"), { ssr: false });
+
+/** Fetch founding member emails from AC pipeline-contacts API and override status */
+function useFoundingOverride(contacts: MapContact[]): MapContact[] {
+  const [foundingEmails, setFoundingEmails] = useState<Set<string> | null>(null);
+
+  useEffect(() => {
+    fetch("/api/ac/pipeline-contacts")
+      .then((r) => r.json())
+      .then((d) => {
+        const emails = new Set<string>();
+        const stage = d.stages?.onboarding_complete;
+        if (Array.isArray(stage)) {
+          for (const c of stage) {
+            if (c.email) emails.add(c.email.toLowerCase());
+          }
+        }
+        setFoundingEmails(emails);
+      })
+      .catch(() => setFoundingEmails(new Set()));
+  }, []);
+
+  return useMemo(() => {
+    if (!foundingEmails) return contacts; // Use spreadsheet data until AC loads
+    return contacts.map((c) => ({
+      ...c,
+      foundingMemberStatus: c.email && foundingEmails.has(c.email.toLowerCase()) ? "Approved" : "",
+    }));
+  }, [contacts, foundingEmails]);
+}
 
 function DetailRow({ label, value, icon: Icon }: { label: string; value: string; icon: React.ElementType }) {
   if (!value) return null;
@@ -159,7 +188,8 @@ function LocationTable({ contacts }: { contacts: MapContact[] }) {
 
 // ─── Main MapClient ──────────────────────────────────────────────────────────
 
-export function MapClient({ contacts }: { contacts: MapContact[] }) {
+export function MapClient({ contacts: rawContacts }: { contacts: MapContact[] }) {
+  const contacts = useFoundingOverride(rawContacts);
   const [selected, setSelected] = useState<MapContact | null>(null);
 
   return (
