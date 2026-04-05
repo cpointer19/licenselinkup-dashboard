@@ -7,7 +7,7 @@ import {
 } from "recharts";
 import { TrendingUp, ArrowRight, UserCheck, ClipboardCheck, Award, MapPin } from "lucide-react";
 import Link from "next/link";
-import type { ACContact, ACAutomation, ACCampaign, ACList, ACTag } from "@/lib/activecampaign";
+import type { ACContact, ACTag } from "@/lib/activecampaign";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
@@ -17,9 +17,6 @@ import { formatDate } from "@/lib/utils";
 
 interface Props {
   contacts: ACContact[];
-  automations: ACAutomation[];
-  campaigns: ACCampaign[];
-  lists: ACList[];
   tags: ACTag[];
 }
 
@@ -139,7 +136,7 @@ function ConversionPipeline({ stages, totalContacts, rejectedCount }: { stages: 
 
 // ─── Main Overview ────────────────────────────────────────────────────────────
 
-export function OverviewClient({ contacts, automations, campaigns, lists, tags }: Props) {
+export function OverviewClient({ contacts, tags }: Props) {
   const growthData  = useMemo(() => groupByDay(contacts), [contacts]);
 
   const recentContacts = [...contacts]

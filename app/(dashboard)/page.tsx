@@ -3,32 +3,20 @@ export const dynamic = "force-dynamic";
 import { Suspense } from "react";
 import {
   fetchAllContacts,
-  fetchAutomations,
-  fetchCampaigns,
-  fetchLists,
   fetchTags,
 } from "@/lib/activecampaign";
 import { isTestUser } from "@/lib/utils";
 import { OverviewClient } from "./overview-client";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const LANCE_LIST_KEYWORDS = ["lance"];
-
 async function getOverviewData() {
-  const [allContacts, lists, automations, campaigns, tags] = await Promise.all([
+  const [allContacts, tags] = await Promise.all([
     fetchAllContacts(),
-    fetchLists(),
-    fetchAutomations(),
-    fetchCampaigns(),
     fetchTags(),
   ]);
 
   const contacts = allContacts.filter((c) => !isTestUser(c.email));
-  const filteredLists = lists.filter((l) =>
-    !LANCE_LIST_KEYWORDS.some((kw) => l.name.toLowerCase().includes(kw))
-  );
-
-  return { contacts, automations, campaigns, lists: filteredLists, tags };
+  return { contacts, tags };
 }
 
 export default async function OverviewPage() {
