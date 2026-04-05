@@ -42,7 +42,8 @@ export function isTestUser(email: string): boolean {
   return (
     lower.endsWith("@agilno.com") ||
     lower.startsWith("pointercu") ||
-    lower === "testing1@gmail.com"
+    lower === "testing1@gmail.com" ||
+    lower === "ivy_gervais@outlook.com"
   );
 }
 
