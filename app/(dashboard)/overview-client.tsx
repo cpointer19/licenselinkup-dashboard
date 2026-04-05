@@ -24,6 +24,8 @@ function groupByDay(contacts: ACContact[]) {
   const map = new Map<string, number>();
   for (const c of contacts) {
     if (!c.cdate) continue;
+    // Only chart contacts from 2026 onward (launch period)
+    if (c.cdate < "2026-01-01") continue;
     const d = new Date(c.cdate);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     map.set(key, (map.get(key) ?? 0) + 1);
