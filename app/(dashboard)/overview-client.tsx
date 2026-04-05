@@ -2,13 +2,12 @@
 
 import { useMemo, useState, useEffect } from "react";
 import {
-  AreaChart, Area, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  AreaChart, Area,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { Users, Zap, Mail, TrendingUp, ArrowRight, UserCheck, ClipboardCheck, Award, MapPin } from "lucide-react";
+import { TrendingUp, ArrowRight, UserCheck, ClipboardCheck, Award, MapPin } from "lucide-react";
 import Link from "next/link";
 import type { ACContact, ACAutomation, ACCampaign, ACList, ACTag } from "@/lib/activecampaign";
-import { StatsCard } from "@/components/stats-card";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
@@ -24,24 +23,21 @@ interface Props {
   tags: ACTag[];
 }
 
-const COLORS = ["#5375FF", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#06b6d4"];
-
-function groupByMonth(contacts: ACContact[]) {
+function groupByDay(contacts: ACContact[]) {
   const map = new Map<string, number>();
   for (const c of contacts) {
     if (!c.cdate) continue;
     const d = new Date(c.cdate);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     map.set(key, (map.get(key) ?? 0) + 1);
   }
   const sorted = Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
-  // running total
   let cum = 0;
-  return sorted.map(([month, count]) => {
+  return sorted.map(([day, count]) => {
     cum += count;
-    const [yr, mo] = month.split("-");
-    const label = new Date(+yr, +mo - 1).toLocaleDateString("en-US", { month: "short", year: "2-digit" });
-    return { month: label, new: count, total: cum };
+    const [yr, mo, da] = day.split("-");
+    const label = new Date(+yr, +mo - 1, +da).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    return { day: label, new: count, total: cum };
   });
 }
 
@@ -144,17 +140,7 @@ function ConversionPipeline({ stages, totalContacts, rejectedCount }: { stages: 
 // ─── Main Overview ────────────────────────────────────────────────────────────
 
 export function OverviewClient({ contacts, automations, campaigns, lists, tags }: Props) {
-  const growthData  = useMemo(() => groupByMonth(contacts), [contacts]);
-  const listPieData = useMemo(
-    () => lists.map((l) => ({ name: l.name, value: Number(l.active_subscribers ?? 0) })),
-    [lists]
-  );
-
-  const totalOpens  = campaigns.reduce((s, c) => s + Number(c.uniqueopens ?? 0), 0);
-  const totalSent   = campaigns.reduce((s, c) => s + Number(c.send_amt ?? 0), 0);
-  const avgOpenRate = totalSent ? ((totalOpens / totalSent) * 100).toFixed(1) : "—";
-
-  const activeAutos = automations.filter((a) => a.status === "1").length;
+  const growthData  = useMemo(() => groupByDay(contacts), [contacts]);
 
   const recentContacts = [...contacts]
     .sort((a, b) => new Date(b.cdate ?? 0).getTime() - new Date(a.cdate ?? 0).getTime())
@@ -231,98 +217,37 @@ export function OverviewClient({ contacts, automations, campaigns, lists, tags }
       {/* Claude Bot — weekly intelligence */}
       <ClaudeBot />
 
-      {/* KPI cards */}
-      <div className="grid grid-cols-2 gap-4">
-        <StatsCard
-          title="Active Automations"
-          value={activeAutos}
-          subtitle={`of ${automations.length} total`}
-          icon={Zap}
-          iconColor="text-violet-600"
-          iconBg="bg-violet-50"
-        />
-        <StatsCard
-          title="Campaigns Sent"
-          value={campaigns.length}
-          subtitle={`Avg open rate ${avgOpenRate}%`}
-          icon={Mail}
-          iconColor="text-emerald-600"
-          iconBg="bg-emerald-50"
-        />
-      </div>
-
-      {/* Charts row 1 */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {/* Contact growth */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Contact Growth</CardTitle>
-            <CardDescription>Monthly new subscribers &amp; cumulative total</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-2 pb-4">
-            <ResponsiveContainer width="100%" height={240}>
-              <AreaChart data={growthData} margin={{ top: 4, right: 12, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="gradTotal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#5375FF" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#5375FF" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="gradNew" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#94a3b8" }} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                <Tooltip
-                  contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: 12 }}
-                />
-                <Area type="monotone" dataKey="total" stroke="#5375FF" strokeWidth={2} fill="url(#gradTotal)" name="Total" />
-                <Area type="monotone" dataKey="new" stroke="#8b5cf6" strokeWidth={2} fill="url(#gradNew)" name="New" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* List distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle>List Distribution</CardTitle>
-            <CardDescription>Subscribers per list</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-2 pb-4 flex items-center justify-center">
-            <ResponsiveContainer width="100%" height={240}>
-              <PieChart>
-                <Pie
-                  data={listPieData}
-                  cx="40%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={90}
-                  paddingAngle={3}
-                  dataKey="value"
-                >
-                  {listPieData.map((_, idx) => (
-                    <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: 12 }}
-                />
-                <Legend
-                  layout="vertical"
-                  align="right"
-                  verticalAlign="middle"
-                  iconType="circle"
-                  iconSize={8}
-                  formatter={(v) => <span style={{ fontSize: 12, color: "#475569" }}>{v}</span>}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Contact Growth */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Contact Growth</CardTitle>
+          <CardDescription>Daily new contacts &amp; cumulative total</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-2 pb-4">
+          <ResponsiveContainer width="100%" height={280}>
+            <AreaChart data={growthData} margin={{ top: 4, right: 12, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="gradTotal" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#5375FF" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="#5375FF" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="gradNew" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#94a3b8" }} tickLine={false} interval="preserveStartEnd" />
+              <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+              <Tooltip
+                contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: 12 }}
+              />
+              <Area type="monotone" dataKey="total" stroke="#5375FF" strokeWidth={2} fill="url(#gradTotal)" name="Total" />
+              <Area type="monotone" dataKey="new" stroke="#8b5cf6" strokeWidth={2} fill="url(#gradNew)" name="New" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
 
       {/* Recent contacts */}
       <div>
