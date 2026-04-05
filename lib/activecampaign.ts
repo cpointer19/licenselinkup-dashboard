@@ -152,19 +152,29 @@ export interface ACContact {
 /** Fetch all contacts from the Master Contact List (excludes Lance's list) */
 export async function fetchAllContacts(): Promise<ACContact[]> {
   const MASTER_LIST_ID = "3";
-  const all: ACContact[] = [];
-  let offset = 0;
-  while (true) {
-    const data = await acFetch<{ contacts: ACContact[] }>(
-      "/contacts",
-      { limit: "100", offset: String(offset), status: "-1", listid: MASTER_LIST_ID, "orders[cdate]": "DESC" }
-    );
-    const items = data.contacts ?? [];
-    all.push(...items);
-    if (items.length < 100 || all.length >= 2000) break;
-    offset += 100;
-  }
-  return all;
+  const params = { limit: "100", status: "-1", listid: MASTER_LIST_ID, "orders[cdate]": "DESC" };
+
+  // First page — also tells us the total
+  const first = await acFetch<{ contacts: ACContact[]; meta?: { total: string } }>(
+    "/contacts",
+    { ...params, offset: "0" }
+  );
+  const firstPage = first.contacts ?? [];
+  const total = Math.min(Number(first.meta?.total ?? firstPage.length), 2000);
+  if (total <= 100) return firstPage;
+
+  // Remaining pages in parallel
+  const offsets = Array.from(
+    { length: Math.ceil((total - 100) / 100) },
+    (_, i) => (i + 1) * 100
+  );
+  const pages = await Promise.all(
+    offsets.map((offset) =>
+      acFetch<{ contacts: ACContact[] }>("/contacts", { ...params, offset: String(offset) })
+        .then((d) => d.contacts ?? [])
+    )
+  );
+  return [firstPage, ...pages].flat();
 }
 
 /** Fetch contacts created after a given date (for weekly summaries etc.) */
