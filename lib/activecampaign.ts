@@ -155,7 +155,7 @@ export async function fetchAllContacts(): Promise<ACContact[]> {
   while (true) {
     const data = await acFetch<{ contacts: ACContact[] }>(
       "/contacts",
-      { limit: "100", offset: String(offset), status: "-1" }
+      { limit: "100", offset: String(offset), status: "-1", "orders[cdate]": "DESC" }
     );
     const items = data.contacts ?? [];
     all.push(...items);
