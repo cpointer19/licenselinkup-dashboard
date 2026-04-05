@@ -232,15 +232,7 @@ export function OverviewClient({ contacts, automations, campaigns, lists, tags }
       <ClaudeBot />
 
       {/* KPI cards */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-        <StatsCard
-          title="Total Contacts"
-          value={contacts.length}
-          subtitle="All time"
-          icon={Users}
-          iconColor="text-[#5375FF]"
-          iconBg="bg-[#5375FF]/10"
-        />
+      <div className="grid grid-cols-2 gap-4">
         <StatsCard
           title="Active Automations"
           value={activeAutos}

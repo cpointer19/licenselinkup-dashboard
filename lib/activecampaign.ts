@@ -150,24 +150,19 @@ export interface ACContact {
 }
 
 export async function fetchAllContacts(): Promise<ACContact[]> {
-  // Fetch first page to get total count
-  const first = await acFetch<{ contacts: ACContact[]; meta?: { total: string } }>(
-    "/contacts",
-    { limit: "100", offset: "0", status: "-1" }
-  );
-  const total = Number(first.meta?.total ?? first.contacts?.length ?? 0);
-  const firstPage = first.contacts ?? [];
-  if (total <= 100) return firstPage;
-
-  // Fetch remaining pages in parallel
-  const offsets = Array.from({ length: Math.ceil((total - 100) / 100) }, (_, i) => (i + 1) * 100);
-  const pages = await Promise.all(
-    offsets.map((offset) =>
-      acFetch<{ contacts: ACContact[] }>("/contacts", { limit: "100", offset: String(offset), status: "-1" })
-        .then((d) => d.contacts ?? [])
-    )
-  );
-  return [firstPage, ...pages].flat();
+  const all: ACContact[] = [];
+  let offset = 0;
+  while (true) {
+    const data = await acFetch<{ contacts: ACContact[] }>(
+      "/contacts",
+      { limit: "100", offset: String(offset), status: "-1" }
+    );
+    const items = data.contacts ?? [];
+    all.push(...items);
+    if (items.length < 100 || all.length >= 2000) break;
+    offset += 100;
+  }
+  return all;
 }
 
 export async function fetchContactById(id: string): Promise<ACContact> {
@@ -220,6 +215,23 @@ export interface ACContactList {
 export async function fetchContactLists(contactId: string): Promise<ACContactList[]> {
   const data = await acFetch<{ contactLists: ACContactList[] }>(`/contacts/${contactId}/contactLists`);
   return data.contactLists ?? [];
+}
+
+/** Fetch contact IDs for a specific list (for exclusion filtering) */
+export async function fetchContactIdsByListId(listId: string): Promise<Set<string>> {
+  const ids = new Set<string>();
+  let offset = 0;
+  while (true) {
+    const data = await acFetch<{ contactLists: ACContactList[] }>(
+      "/contactLists",
+      { limit: "100", offset: String(offset), listid: listId }
+    );
+    const items = data.contactLists ?? [];
+    for (const cl of items) ids.add(cl.contact);
+    if (items.length < 100) break;
+    offset += 100;
+  }
+  return ids;
 }
 
 /** Fetch ALL contact-list memberships in bulk */
