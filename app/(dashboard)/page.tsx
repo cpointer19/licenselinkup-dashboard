@@ -7,7 +7,6 @@ import {
   fetchCampaigns,
   fetchLists,
   fetchTags,
-  fetchContactIdsByListId,
 } from "@/lib/activecampaign";
 import { isTestUser } from "@/lib/utils";
 import { OverviewClient } from "./overview-client";
@@ -16,27 +15,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 const LANCE_LIST_KEYWORDS = ["lance"];
 
 async function getOverviewData() {
-  // Fetch lists first to identify Lance's list IDs
-  const lists = await fetchLists();
-  const lanceLists = lists.filter((l) =>
-    LANCE_LIST_KEYWORDS.some((kw) => l.name.toLowerCase().includes(kw))
-  );
-
-  // Fetch everything in parallel, including Lance's contact IDs for exclusion
-  const [allContacts, lanceIdSets, automations, campaigns, tags] = await Promise.all([
+  const [allContacts, lists, automations, campaigns, tags] = await Promise.all([
     fetchAllContacts(),
-    Promise.all(lanceLists.map((l) => fetchContactIdsByListId(l.id))),
+    fetchLists(),
     fetchAutomations(),
     fetchCampaigns(),
     fetchTags(),
   ]);
 
-  const lanceContactIds = new Set(lanceIdSets.flatMap((s) => [...s]));
-  const contacts = allContacts.filter(
-    (c) => !isTestUser(c.email) && !lanceContactIds.has(c.id)
-  );
-
-  // Also filter Lance's lists from the List Distribution chart
+  const contacts = allContacts.filter((c) => !isTestUser(c.email));
   const filteredLists = lists.filter((l) =>
     !LANCE_LIST_KEYWORDS.some((kw) => l.name.toLowerCase().includes(kw))
   );
