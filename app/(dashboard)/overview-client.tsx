@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo } from "react";
 import {
   AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -145,39 +145,21 @@ export function OverviewClient({ contacts, tags }: Props) {
     .sort((a, b) => new Date(b.cdate ?? 0).getTime() - new Date(a.cdate ?? 0).getTime())
     .slice(0, 20);
 
-  // Pipeline data from pipeline-contacts API (filtered, excludes rejected)
-  const [pipelineCounts, setPipelineCounts] = useState<Record<string, number> | null>(null);
+  // Pipeline counts from AC tag subscriber_count (fast, no extra API calls)
   const rejectedCount = useMemo(() => {
     const tag = tags.find((t) => t.tag.toLowerCase() === "founding_member_rejected");
     return Number(tag?.subscriber_count ?? 0);
   }, [tags]);
 
-  useEffect(() => {
-    fetch("/api/ac/pipeline-contacts")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.stages) {
-          const counts: Record<string, number> = {};
-          for (const [stage, contacts] of Object.entries(d.stages)) {
-            counts[stage] = Array.isArray(contacts) ? contacts.length : 0;
-          }
-          setPipelineCounts(counts);
-          // Rejected count comes from AC tags (not pipeline-contacts), keep as-is
-        }
-      })
-      .catch(() => {/* keep tag-based fallback */});
-  }, []);
-
   const pipelineStages = useMemo(() => {
     const stageNames = ["became_lead", "profile_created", "onboarding_complete"];
     return stageNames.map((name) => {
-      // Use live pipeline count once loaded; fall back to raw tag subscriber_count
-      const count = pipelineCounts
-        ? (pipelineCounts[name] ?? 0)
-        : Number(tags.find((t) => t.tag.toLowerCase() === name.toLowerCase())?.subscriber_count ?? 0);
+      const raw = Number(tags.find((t) => t.tag.toLowerCase() === name.toLowerCase())?.subscriber_count ?? 0);
+      // Subtract rejected contacts from founding members count
+      const count = name === "onboarding_complete" ? Math.max(0, raw - rejectedCount) : raw;
       return { stage: name, count };
     });
-  }, [pipelineCounts, tags]);
+  }, [tags, rejectedCount]);
 
   return (
     <div className="space-y-6">

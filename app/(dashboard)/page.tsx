@@ -17,8 +17,9 @@ async function getOverviewData() {
 
   const contacts = allContacts.filter((c) => {
     if (isTestUser(c.email)) return false;
-    // Exclude bulk import on 2026-03-25
+    // Exclude bulk import on 2026-03-25 and any pre-2026 test contacts
     if (c.cdate?.startsWith("2026-03-25")) return false;
+    if (c.cdate && c.cdate < "2026-01-01") return false;
     return true;
   });
   return { contacts, tags };
