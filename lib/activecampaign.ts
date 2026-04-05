@@ -150,19 +150,24 @@ export interface ACContact {
 }
 
 export async function fetchAllContacts(): Promise<ACContact[]> {
-  const all: ACContact[] = [];
-  let offset = 0;
-  while (true) {
-    const data = await acFetch<{ contacts: ACContact[]; meta?: { total: string } }>(
-      "/contacts",
-      { limit: "100", offset: String(offset), status: "-1" }
-    );
-    const items = data.contacts ?? [];
-    all.push(...items);
-    if (items.length < 100) break;
-    offset += 100;
-  }
-  return all;
+  // Fetch first page to get total count
+  const first = await acFetch<{ contacts: ACContact[]; meta?: { total: string } }>(
+    "/contacts",
+    { limit: "100", offset: "0", status: "-1" }
+  );
+  const total = Number(first.meta?.total ?? first.contacts?.length ?? 0);
+  const firstPage = first.contacts ?? [];
+  if (total <= 100) return firstPage;
+
+  // Fetch remaining pages in parallel
+  const offsets = Array.from({ length: Math.ceil((total - 100) / 100) }, (_, i) => (i + 1) * 100);
+  const pages = await Promise.all(
+    offsets.map((offset) =>
+      acFetch<{ contacts: ACContact[] }>("/contacts", { limit: "100", offset: String(offset), status: "-1" })
+        .then((d) => d.contacts ?? [])
+    )
+  );
+  return [firstPage, ...pages].flat();
 }
 
 export async function fetchContactById(id: string): Promise<ACContact> {
