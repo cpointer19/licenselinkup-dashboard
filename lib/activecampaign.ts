@@ -165,6 +165,24 @@ export async function fetchAllContacts(): Promise<ACContact[]> {
   return all;
 }
 
+/** Fetch contacts created after a given date (for weekly summaries etc.) */
+export async function fetchRecentContacts(since: Date): Promise<ACContact[]> {
+  const all: ACContact[] = [];
+  let offset = 0;
+  const dateStr = since.toISOString().slice(0, 10);
+  while (true) {
+    const data = await acFetch<{ contacts: ACContact[] }>(
+      "/contacts",
+      { limit: "100", offset: String(offset), status: "-1", "filters[created_after]": dateStr }
+    );
+    const items = data.contacts ?? [];
+    all.push(...items);
+    if (items.length < 100 || all.length >= 500) break;
+    offset += 100;
+  }
+  return all;
+}
+
 export async function fetchContactById(id: string): Promise<ACContact> {
   const data = await acFetch<{ contact: ACContact }>(`/contacts/${id}`);
   return data.contact;

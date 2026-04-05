@@ -1,23 +1,18 @@
 import { NextResponse } from "next/server";
-import { fetchAllContacts, fetchCampaigns, fetchAutomations, fetchTags } from "@/lib/activecampaign";
+import { fetchRecentContacts, fetchAllContacts, fetchCampaigns, fetchAutomations, fetchTags } from "@/lib/activecampaign";
 
 export async function GET() {
   try {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-    const [contacts, campaigns, automations, tags] = await Promise.all([
+    const [newContacts, contacts, campaigns, automations, tags] = await Promise.all([
+      fetchRecentContacts(oneWeekAgo),
       fetchAllContacts(),
       fetchCampaigns(),
       fetchAutomations(),
       fetchTags(),
     ]);
-
-    // New contacts this week
-    const newContacts = contacts.filter((c) => {
-      if (!c.cdate) return false;
-      return new Date(c.cdate) >= oneWeekAgo;
-    });
 
     // Campaigns sent this week
     const recentCampaigns = campaigns.filter((c) => {
