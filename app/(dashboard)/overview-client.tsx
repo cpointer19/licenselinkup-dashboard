@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
-  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  AreaChart, Area, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
-import { Users, Zap, Mail, Tag, TrendingUp, List, ArrowRight, UserCheck, ClipboardCheck, Award, MapPin } from "lucide-react";
+import { Users, Zap, Mail, TrendingUp, ArrowRight, UserCheck, ClipboardCheck, Award, MapPin } from "lucide-react";
 import Link from "next/link";
 import type { ACContact, ACAutomation, ACCampaign, ACList, ACTag } from "@/lib/activecampaign";
 import { StatsCard } from "@/components/stats-card";
@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
 import { CsvExportButton } from "@/components/csv-export-button";
 import { ClaudeBot } from "@/components/claude-bot";
-import { formatDate, formatTagName } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 
 interface Props {
   contacts: ACContact[];
@@ -43,16 +43,6 @@ function groupByMonth(contacts: ACContact[]) {
     const label = new Date(+yr, +mo - 1).toLocaleDateString("en-US", { month: "short", year: "2-digit" });
     return { month: label, new: count, total: cum };
   });
-}
-
-function topTags(tags: ACTag[], n = 10) {
-  return [...tags]
-    .sort((a, b) => Number(b.subscriber_count ?? 0) - Number(a.subscriber_count ?? 0))
-    .slice(0, n)
-    .map((t) => ({
-      name: (() => { const n = formatTagName(t.tag); return n.length > 22 ? n.slice(0, 20) + "…" : n; })(),
-      value: Number(t.subscriber_count ?? 0),
-    }));
 }
 
 // ─── Contact Classification ──────────────────────────────────────────────────
@@ -155,7 +145,6 @@ function ConversionPipeline({ stages, totalContacts, rejectedCount }: { stages: 
 
 export function OverviewClient({ contacts, automations, campaigns, lists, tags }: Props) {
   const growthData  = useMemo(() => groupByMonth(contacts), [contacts]);
-  const tagData     = useMemo(() => topTags(tags, 8), [tags]);
   const listPieData = useMemo(
     () => lists.map((l) => ({ name: l.name, value: Number(l.active_subscribers ?? 0) })),
     [lists]
@@ -169,21 +158,41 @@ export function OverviewClient({ contacts, automations, campaigns, lists, tags }
 
   const recentContacts = [...contacts]
     .sort((a, b) => new Date(b.cdate ?? 0).getTime() - new Date(a.cdate ?? 0).getTime())
-    .slice(0, 8);
+    .slice(0, 20);
 
-  // Pipeline data from tags
-  const pipelineStages = useMemo(() => {
-    const stageNames = ["became_lead", "profile_created", "onboarding_complete"];
-    return stageNames.map((name) => {
-      const tag = tags.find((t) => t.tag.toLowerCase() === name.toLowerCase());
-      return { stage: name, count: Number(tag?.subscriber_count ?? 0) };
-    });
-  }, [tags]);
-
+  // Pipeline data from pipeline-contacts API (filtered, excludes rejected)
+  const [pipelineCounts, setPipelineCounts] = useState<Record<string, number> | null>(null);
   const rejectedCount = useMemo(() => {
     const tag = tags.find((t) => t.tag.toLowerCase() === "founding_member_rejected");
     return Number(tag?.subscriber_count ?? 0);
   }, [tags]);
+
+  useEffect(() => {
+    fetch("/api/ac/pipeline-contacts")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.stages) {
+          const counts: Record<string, number> = {};
+          for (const [stage, contacts] of Object.entries(d.stages)) {
+            counts[stage] = Array.isArray(contacts) ? contacts.length : 0;
+          }
+          setPipelineCounts(counts);
+          // Rejected count comes from AC tags (not pipeline-contacts), keep as-is
+        }
+      })
+      .catch(() => {/* keep tag-based fallback */});
+  }, []);
+
+  const pipelineStages = useMemo(() => {
+    const stageNames = ["became_lead", "profile_created", "onboarding_complete"];
+    return stageNames.map((name) => {
+      // Use live pipeline count once loaded; fall back to raw tag subscriber_count
+      const count = pipelineCounts
+        ? (pipelineCounts[name] ?? 0)
+        : Number(tags.find((t) => t.tag.toLowerCase() === name.toLowerCase())?.subscriber_count ?? 0);
+      return { stage: name, count };
+    });
+  }, [pipelineCounts, tags]);
 
   return (
     <div className="space-y-6">
@@ -223,7 +232,7 @@ export function OverviewClient({ contacts, automations, campaigns, lists, tags }
       <ClaudeBot />
 
       {/* KPI cards */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         <StatsCard
           title="Total Contacts"
           value={contacts.length}
@@ -247,14 +256,6 @@ export function OverviewClient({ contacts, automations, campaigns, lists, tags }
           icon={Mail}
           iconColor="text-emerald-600"
           iconBg="bg-emerald-50"
-        />
-        <StatsCard
-          title="Unique Tags"
-          value={tags.length}
-          subtitle="Across all contacts"
-          icon={Tag}
-          iconColor="text-amber-600"
-          iconBg="bg-amber-50"
         />
       </div>
 
@@ -331,46 +332,13 @@ export function OverviewClient({ contacts, automations, campaigns, lists, tags }
         </Card>
       </div>
 
-      {/* Charts row 2 */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {/* Top tags */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Tags by Subscribers</CardTitle>
-            <CardDescription>Most-used tags across all contacts</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-2 pb-4">
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={tagData} layout="vertical" margin={{ top: 4, right: 24, left: 8, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  tick={{ fontSize: 11, fill: "#475569" }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={160}
-                />
-                <Tooltip
-                  contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: 12 }}
-                />
-                <Bar dataKey="value" name="Contacts" radius={[0, 4, 4, 0]}>
-                  {tagData.map((_, idx) => (
-                    <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Recent contacts */}
+      {/* Recent contacts */}
+      <div>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Recent Contacts</CardTitle>
-              <CardDescription>Latest 8 additions</CardDescription>
+              <CardDescription>Latest 20 additions</CardDescription>
             </div>
             <TrendingUp className="h-4 w-4 text-slate-400" />
           </CardHeader>
@@ -398,34 +366,6 @@ export function OverviewClient({ contacts, automations, campaigns, lists, tags }
         </Card>
       </div>
 
-      {/* Lists summary */}
-      <div>
-        <h2 className="mb-3 text-sm font-semibold text-slate-700 flex items-center gap-2">
-          <List className="h-4 w-4 text-slate-400" /> Lists
-        </h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {lists.map((list, idx) => (
-            <Card key={list.id}>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div
-                    className="h-3 w-3 rounded-full"
-                    style={{ backgroundColor: COLORS[idx % COLORS.length] }}
-                  />
-                  <span className="text-sm font-medium text-slate-800">{list.name}</span>
-                </div>
-                <p className="text-2xl font-bold text-slate-900">{Number(list.active_subscribers ?? 0).toLocaleString()}</p>
-                <p className="text-xs text-slate-500">subscribers</p>
-                {list.unsubscriber_count && Number(list.unsubscriber_count) > 0 && (
-                  <Badge variant="warning" className="mt-2">
-                    {list.unsubscriber_count} unsubscribed
-                  </Badge>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

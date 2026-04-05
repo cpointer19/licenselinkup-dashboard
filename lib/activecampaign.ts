@@ -159,7 +159,7 @@ export async function fetchAllContacts(): Promise<ACContact[]> {
     );
     const items = data.contacts ?? [];
     all.push(...items);
-    if (items.length < 100 || all.length >= 500) break;
+    if (items.length < 100) break;
     offset += 100;
   }
   return all;
