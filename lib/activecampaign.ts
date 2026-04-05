@@ -228,7 +228,7 @@ export async function fetchContactIdsByListId(listId: string): Promise<Set<strin
     );
     const items = data.contactLists ?? [];
     for (const cl of items) ids.add(cl.contact);
-    if (items.length < 100) break;
+    if (items.length < 100 || ids.size >= 2000) break;
     offset += 100;
   }
   return ids;
