@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Sparkles, RefreshCw, Users, Zap } from "lucide-react";
+import { Sparkles, RefreshCw, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -44,9 +44,6 @@ function buildSummaryLines(data: WeeklySummary): string[] {
   lines.push("");
 
 
-  // --- Automations ---
-  lines.push(`⚡ Automations: ${automations.active} of ${automations.total} automations active, nurturing your licensing community.`);
-  lines.push("");
 
   // --- Pipeline ---
   const leads = pipeline.find((p) => p.stage === "became_lead")?.count ?? 0;
@@ -235,15 +232,6 @@ export function ClaudeBot() {
                 <div>
                   <p className="text-lg font-bold text-slate-900">{data?.newContacts.count ?? "—"}</p>
                   <p className="text-[11px] text-slate-500">New Contacts</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 rounded-lg bg-white/70 p-3 border border-[#E9EAEB]">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50">
-                  <Zap className="h-4 w-4 text-violet-600" />
-                </div>
-                <div>
-                  <p className="text-lg font-bold text-slate-900">{data ? `${data.automations.active}/${data.automations.total}` : "—"}</p>
-                  <p className="text-[11px] text-slate-500">Automations Active</p>
                 </div>
               </div>
             </div>
