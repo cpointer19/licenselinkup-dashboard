@@ -15,7 +15,12 @@ async function getOverviewData() {
     fetchTags(),
   ]);
 
-  const contacts = allContacts.filter((c) => !isTestUser(c.email));
+  const contacts = allContacts.filter((c) => {
+    if (isTestUser(c.email)) return false;
+    // Exclude bulk import on 2026-03-25
+    if (c.cdate?.startsWith("2026-03-25")) return false;
+    return true;
+  });
   return { contacts, tags };
 }
 

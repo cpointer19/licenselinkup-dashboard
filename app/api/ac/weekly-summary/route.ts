@@ -6,13 +6,16 @@ export async function GET() {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-    const [newContacts, contacts, campaigns, automations, tags] = await Promise.all([
+    const [recentRaw, contacts, campaigns, automations, tags] = await Promise.all([
       fetchRecentContacts(oneWeekAgo),
       fetchAllContacts(),
       fetchCampaigns(),
       fetchAutomations(),
       fetchTags(),
     ]);
+
+    // Exclude bulk import on 2026-03-25
+    const newContacts = recentRaw.filter((c) => !c.cdate?.startsWith("2026-03-25"));
 
     // Campaigns sent this week
     const recentCampaigns = campaigns.filter((c) => {
