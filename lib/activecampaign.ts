@@ -149,13 +149,15 @@ export interface ACContact {
   score?: string;
 }
 
+/** Fetch all contacts from the Master Contact List (excludes Lance's list) */
 export async function fetchAllContacts(): Promise<ACContact[]> {
+  const MASTER_LIST_ID = "3";
   const all: ACContact[] = [];
   let offset = 0;
   while (true) {
     const data = await acFetch<{ contacts: ACContact[] }>(
       "/contacts",
-      { limit: "100", offset: String(offset), status: "-1", "orders[cdate]": "DESC" }
+      { limit: "100", offset: String(offset), status: "-1", listid: MASTER_LIST_ID, "orders[cdate]": "DESC" }
     );
     const items = data.contacts ?? [];
     all.push(...items);
