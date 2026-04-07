@@ -20,7 +20,7 @@ interface Props {
 }
 
 export function CampaignsClient({ campaigns: allCampaigns }: Props) {
-  const [sort, setSort] = useState<"sent" | "opens" | "clicks">("sent");
+  const [sort, setSort] = useState<"name" | "sent" | "opens" | "clicks">("name");
 
   const campaigns = allCampaigns.filter((c) => Number(c.send_amt) > 0);
 
@@ -47,6 +47,7 @@ export function CampaignsClient({ campaigns: allCampaigns }: Props) {
 
   const sortedCampaigns = useMemo(() => {
     return [...campaigns].sort((a, b) => {
+      if (sort === "name")   return a.name.localeCompare(b.name);
       if (sort === "sent")   return Number(b.send_amt) - Number(a.send_amt);
       if (sort === "opens")  return Number(b.uniqueopens) - Number(a.uniqueopens);
       if (sort === "clicks") return Number(b.uniquelinkclicks) - Number(a.uniquelinkclicks);
@@ -110,7 +111,7 @@ export function CampaignsClient({ campaigns: allCampaigns }: Props) {
           <CardTitle>All Campaigns</CardTitle>
           <div className="flex items-center gap-1 text-xs text-slate-500">
             Sort by:
-            {(["sent", "opens", "clicks"] as const).map((s) => (
+            {(["name", "sent", "opens", "clicks"] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setSort(s)}
