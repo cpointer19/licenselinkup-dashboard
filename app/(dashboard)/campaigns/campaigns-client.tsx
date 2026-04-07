@@ -19,8 +19,10 @@ interface Props {
   campaigns: ACCampaign[];
 }
 
-export function CampaignsClient({ campaigns }: Props) {
+export function CampaignsClient({ campaigns: allCampaigns }: Props) {
   const [sort, setSort] = useState<"sent" | "opens" | "clicks">("sent");
+
+  const campaigns = allCampaigns.filter((c) => Number(c.send_amt) > 0);
 
   const sent   = campaigns.reduce((s, c) => s + Number(c.send_amt ?? 0), 0);
   const opens  = campaigns.reduce((s, c) => s + Number(c.uniqueopens ?? 0), 0);
