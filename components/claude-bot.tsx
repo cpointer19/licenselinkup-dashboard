@@ -30,16 +30,16 @@ function buildSummaryLines(data: WeeklySummary): string[] {
   const { newContacts, campaigns, automations, totalContacts, pipeline } = data;
   const lines: string[] = [];
 
-  lines.push(`Hey! I just pulled your LicenseLinkUp data for the past 7 days. Here's what's been happening:`);
+  lines.push(`Hey! I just pulled your LicenseLinkUp data for the past 7 days (${formatRange(data.week.start, data.week.end)}). Here's what's been happening:`);
   lines.push("");
 
-  // --- Contacts ---
+  // --- Leads ---
   if (newContacts.count > 0) {
     const nameList = newContacts.names.slice(0, 3).join(", ");
     const extra = newContacts.count > 3 ? ` and ${newContacts.count - 3} others` : "";
-    lines.push(`📥 New Contacts: You welcomed ${newContacts.count} new contact${newContacts.count !== 1 ? "s" : ""} this week — ${nameList}${extra}. Your total audience is now ${totalContacts.toLocaleString()}.`);
+    lines.push(`📥 New Leads: You welcomed ${newContacts.count} new lead${newContacts.count !== 1 ? "s" : ""} this week — ${nameList}${extra}. Your total leads is now ${totalContacts.toLocaleString()}.`);
   } else {
-    lines.push(`📥 New Contacts: No new contacts joined this week. Your total audience remains at ${totalContacts.toLocaleString()} contacts.`);
+    lines.push(`📥 New Leads: No new leads joined this week. Your total leads remains at ${totalContacts.toLocaleString()}.`);
   }
   lines.push("");
 
@@ -62,14 +62,22 @@ function buildSummaryLines(data: WeeklySummary): string[] {
 
   // --- Insight ---
   if (newContacts.count > 5) {
-    lines.push(`💡 Insight: Strong new contact momentum this week! Send a welcome email while leads are warm.`);
+    lines.push(`💡 Insight: Strong new lead momentum this week! Send a welcome email while leads are warm.`);
   } else if (newContacts.count > 0) {
-    lines.push(`💡 Insight: New contacts coming in — keep the momentum going!`);
+    lines.push(`💡 Insight: New leads coming in — keep the momentum going!`);
   } else {
     lines.push(`💡 Insight: Quieter week — review automation sequences for optimization or promote your platform to drive new signups.`);
   }
 
   return lines;
+}
+
+function formatRange(start: string, end: string): string {
+  const fmt = (iso: string) => {
+    const [y, m, d] = iso.split("-").map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  };
+  return `${fmt(start)} → ${fmt(end)}`;
 }
 
 export function ClaudeBot() {
@@ -231,7 +239,7 @@ export function ClaudeBot() {
                 </div>
                 <div>
                   <p className="text-lg font-bold text-slate-900">{data?.newContacts.count ?? "—"}</p>
-                  <p className="text-[11px] text-slate-500">New Contacts</p>
+                  <p className="text-[11px] text-slate-500">New Leads</p>
                 </div>
               </div>
             </div>
@@ -241,8 +249,8 @@ export function ClaudeBot() {
         {/* Dates footer */}
         {data && (
           <div className="flex items-center justify-between border-t border-[#E9EAEB] px-5 py-2.5 text-xs text-slate-400">
-            <span>Week of {data.week.start} → {data.week.end}</span>
-            <span>{data.totalContacts.toLocaleString()} total contacts</span>
+            <span>Week of {formatRange(data.week.start, data.week.end)}</span>
+            <span>{data.totalContacts.toLocaleString()} total leads</span>
           </div>
         )}
       </CardContent>

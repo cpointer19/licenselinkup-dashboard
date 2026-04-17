@@ -1,21 +1,51 @@
 import { NextResponse } from "next/server";
-import { fetchRecentContacts, fetchAllContacts, fetchCampaigns, fetchAutomations, fetchTags } from "@/lib/activecampaign";
+import {
+  fetchRecentContacts,
+  fetchAllContacts,
+  fetchAllContactTags,
+  fetchContactById,
+  fetchCampaigns,
+  fetchAutomations,
+  fetchTags,
+  type ACContact,
+} from "@/lib/activecampaign";
+import { isTestUser } from "@/lib/utils";
 
 export async function GET() {
   try {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-    const [recentRaw, contacts, campaigns, automations, tags] = await Promise.all([
+    const [recentRaw, listContacts, allContactTags, campaigns, automations, tags] = await Promise.all([
       fetchRecentContacts(oneWeekAgo),
       fetchAllContacts(),
+      fetchAllContactTags(),
       fetchCampaigns(),
       fetchAutomations(),
       fetchTags(),
     ]);
 
-    // Exclude bulk import on 2026-03-25
-    const newContacts = recentRaw.filter((c) => !c.cdate?.startsWith("2026-03-25"));
+    // --- Resolve full set of Lead contacts (same logic as /api/ac/leads) ---
+    const becameLead = tags.find((t) => t.tag.toLowerCase() === "became_lead");
+    const leadIds = new Set<string>();
+    if (becameLead) {
+      for (const ct of allContactTags) {
+        if (ct.tag === becameLead.id) leadIds.add(ct.contact);
+      }
+    }
+
+    const fromList = listContacts.filter((c) => leadIds.has(c.id));
+    const have = new Set(fromList.map((c) => c.id));
+    const missingIds = [...leadIds].filter((id) => !have.has(id));
+    const fetched = await Promise.all(
+      missingIds.map((id) => fetchContactById(id).catch(() => null))
+    );
+    const extra = fetched.filter((c): c is ACContact => c !== null);
+    const allLeads = [...fromList, ...extra].filter((c) => !isTestUser(c.email));
+
+    // --- New Leads this week (leads created in last 7 days) ---
+    const recentLeadIds = new Set(recentRaw.map((c) => c.id));
+    const newLeads = allLeads.filter((c) => recentLeadIds.has(c.id));
 
     // Campaigns sent this week
     const recentCampaigns = campaigns.filter((c) => {
@@ -32,15 +62,22 @@ export async function GET() {
     const weekClicks = recentCampaigns.reduce((s, c) => s + Number(c.uniquelinkclicks ?? 0), 0);
     const openRate   = weekSent ? ((weekOpens / weekSent) * 100).toFixed(1) : null;
 
-    // Pipeline funnel data from tags
-    const pipelineTags = ["became_lead", "profile_created", "onboarding_complete"];
-    const pipeline = pipelineTags.map((tagName) => {
-      const tag = tags.find((t) => t.tag.toLowerCase() === tagName.toLowerCase());
-      return {
-        stage: tagName,
-        count: Number(tag?.subscriber_count ?? 0),
-      };
-    });
+    // Pipeline funnel data — matches the Overview scorecard sources
+    const profileCreated = Number(
+      tags.find((t) => t.tag.toLowerCase() === "profile_created")?.subscriber_count ?? 0
+    );
+    const leadsCount = Number(becameLead?.subscriber_count ?? allLeads.length);
+    // Founding Members = sends of "APPROVED: FOUNDING MEMBER" campaign
+    //   (email 1 of the Founding Member Approval automation)
+    const approvedCampaign = campaigns.find(
+      (c) => c.name.trim().toUpperCase() === "APPROVED: FOUNDING MEMBER"
+    );
+    const foundingMembersCount = Number(approvedCampaign?.send_amt ?? 0);
+    const pipeline = [
+      { stage: "became_lead",         count: leadsCount },
+      { stage: "profile_created",     count: profileCreated },
+      { stage: "onboarding_complete", count: foundingMembersCount },
+    ];
 
     return NextResponse.json({
       week: {
@@ -48,8 +85,8 @@ export async function GET() {
         end:   new Date().toISOString().slice(0, 10),
       },
       newContacts: {
-        count: newContacts.length,
-        names: newContacts.slice(0, 5).map((c) => [c.firstName, c.lastName].filter(Boolean).join(" ") || c.email),
+        count: newLeads.length,
+        names: newLeads.slice(0, 5).map((c) => [c.firstName, c.lastName].filter(Boolean).join(" ") || c.email),
       },
       campaigns: {
         count:      recentCampaigns.length,
@@ -63,7 +100,7 @@ export async function GET() {
         active: activeAutos.length,
         total:  automations.length,
       },
-      totalContacts: contacts.length,
+      totalContacts: leadsCount,
       pipeline,
     });
   } catch (err) {

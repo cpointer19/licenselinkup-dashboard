@@ -9,8 +9,6 @@ import {
   type ACContact,
   type ACContactTag,
 } from "@/lib/activecampaign";
-import { isTestUser } from "@/lib/utils";
-
 export async function GET() {
   try {
     const [tags, listContacts, allContactTags] = await Promise.all([
@@ -44,7 +42,9 @@ export async function GET() {
     );
     const extra = fetched.filter((c): c is ACContact => c !== null);
 
-    const contacts = [...fromList, ...extra].filter((c) => !isTestUser(c.email));
+    // No test-user filter: export row count must match the became_lead tag
+    // subscriber count shown on the Overview Leads scorecard.
+    const contacts = [...fromList, ...extra];
 
     // Enrich (reuse already-fetched tags; fetch lists + automations per contact)
     const enriched = await Promise.all(

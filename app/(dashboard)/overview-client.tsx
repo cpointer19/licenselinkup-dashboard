@@ -5,9 +5,10 @@ import {
   AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { TrendingUp, ArrowRight, UserCheck, ClipboardCheck, Award, MapPin } from "lucide-react";
+import { TrendingUp, ArrowRight, UserCheck, ClipboardCheck, Award, MapPin, FileText, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import type { ACContact, ACTag } from "@/lib/activecampaign";
+import { MAP_CONTACTS } from "@/lib/map-contacts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
@@ -18,6 +19,7 @@ import { formatDate } from "@/lib/utils";
 interface Props {
   contacts: ACContact[];
   tags: ACTag[];
+  foundingMembersSent: number;
 }
 
 function groupByDay(contacts: ACContact[]) {
@@ -55,9 +57,11 @@ function isRealLead(email: string): boolean {
 // ─── Conversion Pipeline ──────────────────────────────────────────────────────
 
 const PIPELINE_META = [
-  { stage: "became_lead",         label: "Leads (Signup)",      subtext: "These people left their email on the landing page.",                                                                        icon: UserCheck,      color: "#5375FF", bg: "bg-[#5375FF]/10",    border: "border-[#5375FF]/20",    text: "text-[#5375FF]" },
-  { stage: "profile_created",     label: "Profile Created",     subtext: "These people verified their email + left their name and role and continued through the sign up flow.",                      icon: ClipboardCheck, color: "#8b5cf6", bg: "bg-violet-50",  border: "border-violet-200",  text: "text-violet-700" },
-  { stage: "onboarding_complete", label: "Founding Members",    subtext: "We've vetted these people and verified they have an active license.",                                                        icon: Award,          color: "#10b981", bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700" },
+  { stage: "leads_2026",          label: "Leads",                subtext: "These people left an email on licenselinkup.com.",                                                    icon: UserCheck,      color: "#5375FF", bg: "bg-[#5375FF]/10",    border: "border-[#5375FF]/20",    text: "text-[#5375FF]" },
+  { stage: "profile_created",     label: "Profile Created",      subtext: "Continued through the sign up flow. Created an account, verified their email, and provided their name + role.", icon: ClipboardCheck, color: "#8b5cf6", bg: "bg-violet-50",  border: "border-violet-200",  text: "text-violet-700" },
+  { stage: "provided_license",    label: "Provided a License",   subtext: "These people provided a license. Shown as pins on the Member Map.",                                   icon: FileText,       color: "#06b6d4", bg: "bg-cyan-50",    border: "border-cyan-200",    text: "text-cyan-700"   },
+  { stage: "verified_license",    label: "Verified License",     subtext: "Has a verified license. Is visible in Find a Provider.",                                              icon: ShieldCheck,    color: "#10b981", bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700" },
+  { stage: "founding_members",    label: "Founding Members",     subtext: "Fully vetted, verified license and have been sent a Founding Member approval email.",                 icon: Award,          color: "#f59e0b", bg: "bg-amber-50",   border: "border-amber-200",   text: "text-amber-700"  },
 ];
 
 function ConversionPipeline({ stages, totalContacts, rejectedCount }: { stages: { stage: string; count: number }[]; totalContacts: number; rejectedCount: number }) {
@@ -102,13 +106,13 @@ function ConversionPipeline({ stages, totalContacts, rejectedCount }: { stages: 
               : null;
 
             return (
-              <div key={stage.stage} className="flex items-center gap-3 flex-1">
-                <div className={`flex-1 rounded-xl border ${meta.border} ${meta.bg} p-4 transition-all hover:shadow-md`}>
+              <div key={stage.stage} className="flex items-stretch gap-2 flex-1">
+                <div className={`flex-1 rounded-xl border ${meta.border} ${meta.bg} p-4 transition-all hover:shadow-md flex flex-col`}>
                   <div className="flex items-center gap-2 mb-3">
-                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-white/80`}>
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-white/80 flex-shrink-0`}>
                       <Icon className="h-4 w-4" style={{ color: meta.color }} />
                     </div>
-                    <span className={`text-xs font-semibold ${meta.text}`}>{meta.label}</span>
+                    <span className={`text-xs font-semibold ${meta.text} leading-tight`}>{meta.label}</span>
                   </div>
                   <p className={`text-3xl font-bold ${meta.text}`}>{stage.count.toLocaleString()}</p>
                   <p className="text-xs text-slate-500 mt-0.5">contacts</p>
@@ -118,9 +122,10 @@ function ConversionPipeline({ stages, totalContacts, rejectedCount }: { stages: 
                       style={{ width: `${barPct}%`, backgroundColor: meta.color }}
                     />
                   </div>
+                  <p className="mt-3 text-[11px] text-slate-500 leading-snug">{meta.subtext}</p>
                 </div>
                 {idx < stages.length - 1 && (
-                  <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                  <div className="flex flex-col items-center justify-center gap-1 flex-shrink-0 pt-6">
                     <ArrowRight className="h-5 w-5 text-slate-300" />
                     {advanceRate && (
                       <span className="text-[10px] font-medium text-slate-400">{advanceRate}%</span>
@@ -138,7 +143,7 @@ function ConversionPipeline({ stages, totalContacts, rejectedCount }: { stages: 
 
 // ─── Main Overview ────────────────────────────────────────────────────────────
 
-export function OverviewClient({ contacts, tags }: Props) {
+export function OverviewClient({ contacts, tags, foundingMembersSent }: Props) {
   const growthData  = useMemo(() => groupByDay(contacts), [contacts]);
 
   const recentContacts = [...contacts]
@@ -152,14 +157,38 @@ export function OverviewClient({ contacts, tags }: Props) {
   }, [tags]);
 
   const pipelineStages = useMemo(() => {
-    const stageNames = ["became_lead", "profile_created", "onboarding_complete"];
-    return stageNames.map((name) => {
-      const raw = Number(tags.find((t) => t.tag.toLowerCase() === name.toLowerCase())?.subscriber_count ?? 0);
-      // Subtract rejected contacts from founding members count
-      const count = name === "onboarding_complete" ? Math.max(0, raw - rejectedCount) : raw;
-      return { stage: name, count };
-    });
-  }, [tags, rejectedCount]);
+    // 1. Leads — count from the became_lead tag's subscriber_count
+    //    (matches the AC tag count exactly)
+    const leads2026Count = Number(
+      tags.find((t) => t.tag.toLowerCase() === "became_lead")?.subscriber_count ?? 0
+    );
+
+    // 2. Profile Created — from AC tag subscriber_count
+    const profileCreatedCount = Number(
+      tags.find((t) => t.tag.toLowerCase() === "profile_created")?.subscriber_count ?? 0
+    );
+
+    // 3. Provided a License — pins on Member Map
+    const providedLicenseCount = MAP_CONTACTS.length;
+
+    // 4. Verified License — unique emails with "Verified" license
+    const verifiedLicenseCount = new Set(
+      MAP_CONTACTS
+        .filter((c) => c.licenseVerified === "Verified")
+        .map((c) => c.email.toLowerCase())
+    ).size;
+
+    // 5. Founding Members — sends of "APPROVED: FOUNDING MEMBER" campaign
+    //    (email 1 of the Founding Member Approval automation)
+
+    return [
+      { stage: "leads_2026",       count: leads2026Count },
+      { stage: "profile_created",  count: profileCreatedCount },
+      { stage: "provided_license", count: providedLicenseCount },
+      { stage: "verified_license", count: verifiedLicenseCount },
+      { stage: "founding_members", count: foundingMembersSent },
+    ];
+  }, [tags, foundingMembersSent]);
 
   return (
     <div className="space-y-6">
