@@ -149,31 +149,6 @@ export interface ACContact {
   score?: string;
 }
 
-/** Fetch contacts tagged with a specific tag ID */
-export async function fetchContactsByTagId(tagId: string): Promise<ACContact[]> {
-  const params = { limit: "100", status: "-1", tag: tagId, "orders[cdate]": "DESC" };
-
-  const first = await acFetch<{ contacts: ACContact[]; meta?: { total: string } }>(
-    "/contacts",
-    { ...params, offset: "0" }
-  );
-  const firstPage = first.contacts ?? [];
-  const total = Math.min(Number(first.meta?.total ?? firstPage.length), 2000);
-  if (total <= 100) return firstPage;
-
-  const offsets = Array.from(
-    { length: Math.ceil((total - 100) / 100) },
-    (_, i) => (i + 1) * 100
-  );
-  const pages = await Promise.all(
-    offsets.map((offset) =>
-      acFetch<{ contacts: ACContact[] }>("/contacts", { ...params, offset: String(offset) })
-        .then((d) => d.contacts ?? [])
-    )
-  );
-  return [firstPage, ...pages].flat();
-}
-
 /** Fetch all contacts from the Master Contact List (excludes Lance's list) */
 export async function fetchAllContacts(): Promise<ACContact[]> {
   const MASTER_LIST_ID = "3";
@@ -237,6 +212,23 @@ export interface ACContactTag {
 export async function fetchContactTags(contactId: string): Promise<ACContactTag[]> {
   const data = await acFetch<{ contactTags: ACContactTag[] }>(`/contacts/${contactId}/contactTags`);
   return data.contactTags ?? [];
+}
+
+/** Fetch contact IDs that have a specific tag */
+export async function fetchContactIdsByTagId(tagId: string): Promise<Set<string>> {
+  const ids = new Set<string>();
+  let offset = 0;
+  while (true) {
+    const data = await acFetch<{ contactTags: ACContactTag[] }>(
+      "/contactTags",
+      { limit: "100", offset: String(offset), tag: tagId }
+    );
+    const items = data.contactTags ?? [];
+    for (const ct of items) ids.add(ct.contact);
+    if (items.length < 100 || ids.size >= 2000) break;
+    offset += 100;
+  }
+  return ids;
 }
 
 /** Fetch ALL contact-tag relationships in bulk (much faster than per-contact calls) */

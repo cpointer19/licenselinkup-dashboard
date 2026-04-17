@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import {
   fetchTags,
-  fetchContactsByTagId,
+  fetchAllContacts,
+  fetchContactIdsByTagId,
   fetchContactTags,
   fetchContactLists,
   fetchContactAutomationsByContact,
@@ -10,12 +11,18 @@ import { isTestUser } from "@/lib/utils";
 
 export async function GET() {
   try {
-    const tags = await fetchTags();
+    const [tags, allContacts] = await Promise.all([fetchTags(), fetchAllContacts()]);
+
     const becameLead = tags.find((t) => t.tag.toLowerCase() === "became_lead");
     if (!becameLead) return NextResponse.json({ contacts: [] });
 
-    const allContacts = await fetchContactsByTagId(becameLead.id);
-    const contacts = allContacts.filter((c) => !isTestUser(c.email));
+    // Get exact set of contact IDs that have the became_lead tag
+    const leadIds = await fetchContactIdsByTagId(becameLead.id);
+
+    // Filter list-3 contacts to only those with the tag
+    const contacts = allContacts.filter(
+      (c) => !isTestUser(c.email) && leadIds.has(c.id)
+    );
 
     const enriched = await Promise.all(
       contacts.map(async (contact) => {
