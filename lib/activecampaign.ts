@@ -214,23 +214,6 @@ export async function fetchContactTags(contactId: string): Promise<ACContactTag[
   return data.contactTags ?? [];
 }
 
-/** Fetch contact IDs that have a specific tag */
-export async function fetchContactIdsByTagId(tagId: string): Promise<Set<string>> {
-  const ids = new Set<string>();
-  let offset = 0;
-  while (true) {
-    const data = await acFetch<{ contactTags: ACContactTag[] }>(
-      "/contactTags",
-      { limit: "100", offset: String(offset), tag: tagId }
-    );
-    const items = data.contactTags ?? [];
-    for (const ct of items) ids.add(ct.contact);
-    if (items.length < 100 || ids.size >= 2000) break;
-    offset += 100;
-  }
-  return ids;
-}
-
 /** Fetch ALL contact-tag relationships in bulk (much faster than per-contact calls) */
 export async function fetchAllContactTags(): Promise<ACContactTag[]> {
   const all: ACContactTag[] = [];
