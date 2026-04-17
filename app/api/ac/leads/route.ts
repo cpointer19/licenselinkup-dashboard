@@ -3,14 +3,17 @@ import {
   fetchTags,
   fetchAllContacts,
   fetchAllContactTags,
+  fetchContactById,
   fetchContactLists,
   fetchContactAutomationsByContact,
+  type ACContact,
+  type ACContactTag,
 } from "@/lib/activecampaign";
 import { isTestUser } from "@/lib/utils";
 
 export async function GET() {
   try {
-    const [tags, allContacts, allContactTags] = await Promise.all([
+    const [tags, listContacts, allContactTags] = await Promise.all([
       fetchTags(),
       fetchAllContacts(),
       fetchAllContactTags(),
@@ -19,10 +22,10 @@ export async function GET() {
     const becameLead = tags.find((t) => t.tag.toLowerCase() === "became_lead");
     if (!becameLead) return NextResponse.json({ contacts: [] });
 
-    // Build exact set of contact IDs tagged with became_lead (client-side filter,
-    // since AC's server-side tag= query param is silently ignored).
+    // Exact set of contact IDs tagged with became_lead (client-side, since
+    // AC's server-side tag= query param is silently ignored).
     const leadIds = new Set<string>();
-    const tagsByContact = new Map<string, typeof allContactTags>();
+    const tagsByContact = new Map<string, ACContactTag[]>();
     for (const ct of allContactTags) {
       if (ct.tag === becameLead.id) leadIds.add(ct.contact);
       const arr = tagsByContact.get(ct.contact) ?? [];
@@ -30,12 +33,20 @@ export async function GET() {
       tagsByContact.set(ct.contact, arr);
     }
 
-    // Filter list-3 contacts to only those with the tag
-    const contacts = allContacts.filter(
-      (c) => !isTestUser(c.email) && leadIds.has(c.id)
-    );
+    // Start with list-3 contacts we already have
+    const fromList = listContacts.filter((c) => leadIds.has(c.id));
+    const have = new Set(fromList.map((c) => c.id));
 
-    // Enrich (reuse already-fetched contactTags; lists + automations per-contact)
+    // Fetch any tagged contacts not on list-3 individually by ID
+    const missingIds = [...leadIds].filter((id) => !have.has(id));
+    const fetched = await Promise.all(
+      missingIds.map((id) => fetchContactById(id).catch(() => null))
+    );
+    const extra = fetched.filter((c): c is ACContact => c !== null);
+
+    const contacts = [...fromList, ...extra].filter((c) => !isTestUser(c.email));
+
+    // Enrich (reuse already-fetched tags; fetch lists + automations per contact)
     const enriched = await Promise.all(
       contacts.map(async (contact) => {
         try {
