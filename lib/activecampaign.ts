@@ -149,6 +149,31 @@ export interface ACContact {
   score?: string;
 }
 
+/** Fetch contacts tagged with a specific tag ID */
+export async function fetchContactsByTagId(tagId: string): Promise<ACContact[]> {
+  const params = { limit: "100", status: "-1", tag: tagId, "orders[cdate]": "DESC" };
+
+  const first = await acFetch<{ contacts: ACContact[]; meta?: { total: string } }>(
+    "/contacts",
+    { ...params, offset: "0" }
+  );
+  const firstPage = first.contacts ?? [];
+  const total = Math.min(Number(first.meta?.total ?? firstPage.length), 2000);
+  if (total <= 100) return firstPage;
+
+  const offsets = Array.from(
+    { length: Math.ceil((total - 100) / 100) },
+    (_, i) => (i + 1) * 100
+  );
+  const pages = await Promise.all(
+    offsets.map((offset) =>
+      acFetch<{ contacts: ACContact[] }>("/contacts", { ...params, offset: String(offset) })
+        .then((d) => d.contacts ?? [])
+    )
+  );
+  return [firstPage, ...pages].flat();
+}
+
 /** Fetch all contacts from the Master Contact List (excludes Lance's list) */
 export async function fetchAllContacts(): Promise<ACContact[]> {
   const MASTER_LIST_ID = "3";

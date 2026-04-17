@@ -168,10 +168,10 @@ export function OverviewClient({ contacts, tags }: Props) {
         description={`LicenseLinkUp · ${new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`}
       >
         <CsvExportButton
-          label="Export All Contacts"
-          endpoint="/api/ac/contacts"
+          label="Export Leads"
+          endpoint="/api/ac/leads"
           dataKey="contacts"
-          filename="licenselinkup-contacts"
+          filename="licenselinkup-leads"
         />
       </PageHeader>
 
