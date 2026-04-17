@@ -171,12 +171,9 @@ export function OverviewClient({ contacts, tags, foundingMembersSent }: Props) {
     // 3. Provided a License — pins on Member Map
     const providedLicenseCount = MAP_CONTACTS.length;
 
-    // 4. Verified License — unique emails with "Verified" license
-    const verifiedLicenseCount = new Set(
-      MAP_CONTACTS
-        .filter((c) => c.licenseVerified === "Verified")
-        .map((c) => c.email.toLowerCase())
-    ).size;
+    // 4. Verified License — Provided a License minus current license issues
+    const LICENSE_ISSUES = 21;
+    const verifiedLicenseCount = Math.max(0, providedLicenseCount - LICENSE_ISSUES);
 
     // 5. Founding Members — sends of "APPROVED: FOUNDING MEMBER" campaign
     //    (email 1 of the Founding Member Approval automation)
