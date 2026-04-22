@@ -67,12 +67,10 @@ export async function GET() {
       tags.find((t) => t.tag.toLowerCase() === "profile_created")?.subscriber_count ?? 0
     );
     const leadsCount = Number(becameLead?.subscriber_count ?? allLeads.length);
-    // Founding Members = sends of "APPROVED: FOUNDING MEMBER" campaign
-    //   (email 1 of the Founding Member Approval automation)
-    const approvedCampaign = campaigns.find(
-      (c) => c.name.trim().toUpperCase() === "APPROVED: FOUNDING MEMBER"
+    // Founding Members = unique contacts with founding_member_approved tag
+    const foundingMembersCount = Number(
+      tags.find((t) => t.tag.toLowerCase() === "founding_member_approved")?.subscriber_count ?? 0
     );
-    const foundingMembersCount = Number(approvedCampaign?.send_amt ?? 0);
     const pipeline = [
       { stage: "became_lead",         count: leadsCount },
       { stage: "profile_created",     count: profileCreated },

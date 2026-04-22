@@ -19,7 +19,6 @@ import { formatDate } from "@/lib/utils";
 interface Props {
   contacts: ACContact[];
   tags: ACTag[];
-  foundingMembersSent: number;
 }
 
 function groupByDay(contacts: ACContact[]) {
@@ -143,7 +142,7 @@ function ConversionPipeline({ stages, totalContacts, rejectedCount }: { stages: 
 
 // ─── Main Overview ────────────────────────────────────────────────────────────
 
-export function OverviewClient({ contacts, tags, foundingMembersSent }: Props) {
+export function OverviewClient({ contacts, tags }: Props) {
   const growthData  = useMemo(() => groupByDay(contacts), [contacts]);
 
   const recentContacts = [...contacts]
@@ -171,21 +170,23 @@ export function OverviewClient({ contacts, tags, foundingMembersSent }: Props) {
     // 3. Provided a License — pins on Member Map
     const providedLicenseCount = MAP_CONTACTS.length;
 
-    // 4. Verified License — Provided a License minus current license issues
-    const LICENSE_ISSUES = 21;
+    // 4. Passed Vetting — Provided a License minus confirmed license issues
+    const LICENSE_ISSUES = 15;
     const verifiedLicenseCount = Math.max(0, providedLicenseCount - LICENSE_ISSUES);
 
-    // 5. Founding Members — sends of "APPROVED: FOUNDING MEMBER" campaign
-    //    (email 1 of the Founding Member Approval automation)
+    // 5. Founding Members — unique contacts with founding_member_approved tag
+    const foundingMembersCount = Number(
+      tags.find((t) => t.tag.toLowerCase() === "founding_member_approved")?.subscriber_count ?? 0
+    );
 
     return [
       { stage: "leads_2026",       count: leads2026Count },
       { stage: "profile_created",  count: profileCreatedCount },
       { stage: "provided_license", count: providedLicenseCount },
       { stage: "verified_license", count: verifiedLicenseCount },
-      { stage: "founding_members", count: foundingMembersSent },
+      { stage: "founding_members", count: foundingMembersCount },
     ];
-  }, [tags, foundingMembersSent]);
+  }, [tags]);
 
   return (
     <div className="space-y-6">
