@@ -5,7 +5,7 @@ import {
   AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { TrendingUp, ArrowRight, UserCheck, ClipboardCheck, Award, MapPin, FileText, ShieldCheck } from "lucide-react";
+import { TrendingUp, ArrowRight, UserCheck, ClipboardCheck, Award, MapPin, FileText } from "lucide-react";
 import Link from "next/link";
 import type { ACContact, ACTag } from "@/lib/activecampaign";
 import { MAP_CONTACTS } from "@/lib/map-contacts";
@@ -59,8 +59,7 @@ const PIPELINE_META = [
   { stage: "leads_2026",          label: "Leads",                subtext: "These people left an email on licenselinkup.com.",                                                    icon: UserCheck,      color: "#5375FF", bg: "bg-[#5375FF]/10",    border: "border-[#5375FF]/20",    text: "text-[#5375FF]" },
   { stage: "profile_created",     label: "Profile Created",      subtext: "Continued through the sign up flow. Created an account, verified their email, and provided their name + role.", icon: ClipboardCheck, color: "#8b5cf6", bg: "bg-violet-50",  border: "border-violet-200",  text: "text-violet-700" },
   { stage: "provided_license",    label: "Provided a License",   subtext: "These people provided a license. Shown as pins on the Member Map.",                                   icon: FileText,       color: "#06b6d4", bg: "bg-cyan-50",    border: "border-cyan-200",    text: "text-cyan-700"   },
-  { stage: "verified_license",    label: "Passed Vetting",       subtext: "Verified license and Link Score established.",                                                        icon: ShieldCheck,    color: "#10b981", bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700" },
-  { stage: "founding_members",    label: "Founding Members",     subtext: "Fully vetted, verified license and have been sent a Founding Member approval email.",                 icon: Award,          color: "#f59e0b", bg: "bg-amber-50",   border: "border-amber-200",   text: "text-amber-700"  },
+{ stage: "founding_members",    label: "Founding Members",     subtext: "Fully vetted, verified license and have been sent a Founding Member approval email.",                 icon: Award,          color: "#f59e0b", bg: "bg-amber-50",   border: "border-amber-200",   text: "text-amber-700"  },
 ];
 
 function ConversionPipeline({ stages, totalContacts, rejectedCount }: { stages: { stage: string; count: number }[]; totalContacts: number; rejectedCount: number }) {
@@ -170,11 +169,7 @@ export function OverviewClient({ contacts, tags }: Props) {
     // 3. Provided a License — pins on Member Map
     const providedLicenseCount = MAP_CONTACTS.length;
 
-    // 4. Passed Vetting — Provided a License minus confirmed license issues
-    const LICENSE_ISSUES = 18;
-    const verifiedLicenseCount = Math.max(0, providedLicenseCount - LICENSE_ISSUES);
-
-    // 5. Founding Members — unique contacts with founding_member_approved tag
+    // 4. Founding Members — unique contacts with founding_member_approved tag
     const foundingMembersCount = Number(
       tags.find((t) => t.tag.toLowerCase() === "founding_member_approved")?.subscriber_count ?? 0
     );
@@ -183,7 +178,6 @@ export function OverviewClient({ contacts, tags }: Props) {
       { stage: "leads_2026",       count: leads2026Count },
       { stage: "profile_created",  count: profileCreatedCount },
       { stage: "provided_license", count: providedLicenseCount },
-      { stage: "verified_license", count: verifiedLicenseCount },
       { stage: "founding_members", count: foundingMembersCount },
     ];
   }, [tags]);
