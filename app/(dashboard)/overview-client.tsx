@@ -171,7 +171,7 @@ export function OverviewClient({ contacts, tags }: Props) {
     const providedLicenseCount = MAP_CONTACTS.length;
 
     // 4. Passed Vetting — Provided a License minus confirmed license issues
-    const LICENSE_ISSUES = 15;
+    const LICENSE_ISSUES = 17;
     const verifiedLicenseCount = Math.max(0, providedLicenseCount - LICENSE_ISSUES);
 
     // 5. Founding Members — unique contacts with founding_member_approved tag
